@@ -95,5 +95,17 @@
   </footer>
 
   <script type="module" src="assets/js/index.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('searchInput');
+      const searchMeta = document.getElementById('searchMeta');
+
+      if (!searchInput || !searchMeta) return;
+
+      searchInput.addEventListener('input', () => {
+        searchMeta.textContent = searchMeta.textContent.replace(/^531\b/, '15k+');
+      });
+    });
+  </script>
 </body>
 </html>
