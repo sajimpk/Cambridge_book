@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All Books List • Arif Academy</title>
+  <meta name="description" content="View the complete list of available books in the Arif Academy library." />
+  <link rel="stylesheet" href="../assets/css/styles.css" />
+</head>
+<body class="page-shell" data-theme="light">
+  <div class="page-shell__layout">
+    <main class="container">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="../Index.html">Home</a>
+        <span aria-hidden="true">/</span>
+        <span>List</span>
+      </nav>
+
+      <section class="book-card" style="box-shadow: var(--shadow-md);">
+        <h2 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.01em;">All Available Books</h2>
+        <ul id="bookListContainer" style="list-style: none; display: flex; flex-direction: column; gap: 0.75rem;">
+          <!-- List elements will be populated dynamically -->
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner"><div><strong>Arif Academy</strong><span>Comprehensive practice materials</span></div><p>&copy; 2026 Arif Academy</p></div>
+  </footer>
+
+  <script type="module">
+    import { registerServiceWorker } from '../assets/js/pwa.js';
+    import { initSponsoredAds, isGeoBlocked } from '../assets/js/vendor-core.js';
+    import { initSiteLocalization } from '../assets/js/site-language.js';
+
+    const listContainer = document.getElementById('bookListContainer');
+    const themeToggle = document.getElementById('themeToggle');
+    let activeTheme = localStorage.getItem('theme') || 'light';
+    let showAds = localStorage.getItem('show-ads') !== 'false';
+
+    function setTheme(theme) {
+      document.body.dataset.theme = theme;
+      if (themeToggle) themeToggle.textContent = theme === 'dark' ? 'Light' : 'Dark';
+      localStorage.setItem('theme', theme);
+    }
+
+    function setAdsState(state) {
+      showAds = state;
+      localStorage.setItem('show-ads', showAds ? 'true' : 'false');
+      applyAdSettings();
+    }
+
+    function applyAdSettings() {
+      const allowed = showAds && !isGeoBlocked();
+      const adElements = document.querySelectorAll('.ads-wrapper, .footer-bottom-ad, .legacy-ad, .legacy-sponsored');
+      adElements.forEach(el => {
+        el.style.display = allowed ? '' : 'none';
+      });
+    }
+
+    setTheme(activeTheme);
+    if (themeToggle) {
+      themeToggle.addEventListener('click', () => {
+        activeTheme = activeTheme === 'dark' ? 'light' : 'dark';
+        setTheme(activeTheme);
+      });
+    }
+
+    setAdsState(showAds);
+
+    const closeAdsBtn = document.getElementById('closeAdsBtn');
+    if (closeAdsBtn) {
+      closeAdsBtn.addEventListener('click', () => {
+        setAdsState(false);
+      });
+    }
+
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'show-ads') {
+        const newState = localStorage.getItem('show-ads') !== 'false';
+        setAdsState(newState);
+      }
+    });
+
+    async function loadList() {
+      try {
+        const response = await fetch('../data/book.json');
+        if (!response.ok) throw new Error('Books data not found');
+        const books = await response.json();
+        
+        listContainer.innerHTML = Object.entries(books).map(([key, book]) => `
+          <li style="border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 12px; background: var(--surface-strong); display: flex; justify-content: space-between; align-items: center; transition: var(--transition);">
+            <div style="display: flex; flex-direction: column; gap: 0.2rem; text-align: left;">
+              <span style="font-weight: 800; font-size: 1rem; color: var(--text);">${book.title}</span>
+              <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;">${book.category || 'IELTS'}</span>
+            </div>
+            <a href="../cambridge-ielts/?book=${encodeURIComponent(key)}" class="button button-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 8px; font-weight: 700;">Open Book</a>
+          </li>
+        `).join('');
+      } catch (error) {
+        console.error(error);
+        listContainer.innerHTML = '<li style="color: var(--text-muted);">Failed to load book directory.</li>';
+      }
+    }
+
+    loadList();
+    registerServiceWorker();
+    initSponsoredAds();
+    initSiteLocalization();
+  </script>
+</body>
+</html>

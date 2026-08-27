@@ -1,0 +1,21 @@
+{
+  "name": "Arif Academy Book Library",
+  "short_name": "Book Library",
+  "start_url": "/book/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "description": "Static PDF redirect system for 10,000+ books.",
+  "icons": [
+    {
+      "src": "assets/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://arifacademy.com/book/sitemap.xml

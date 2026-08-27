@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Not Found • Arif Academy</title>
+  <meta name="description" content="The requested book could not be found. Search again or return home." />
+  <link rel="canonical" href="https://arifacademy.com/book/404.html" />
+  <meta property="og:title" content="Book Not Found • Arif Academy" />
+  <meta property="og:description" content="The requested book could not be found. Search again or return home." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://arifacademy.com/book/404.html" />
+  <meta property="og:image" content="assets/images/og-preview.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body class="page-shell" data-theme="light">
+  <div class="page-shell__layout">
+    <main class="container notfound-page">
+      <section class="notfound-panel">
+        <p class="notfound-number">404</p>
+        <h2>Search again or go back home.</h2>
+        <p>Try a different title, category, or click a popular book below.</p>
+        <div class="notfound-actions">
+          <a href="index.html" class="button button-primary">Back to Library</a>
+          <button id="openSearchButton" class="button button-secondary">Search Books</button>
+        </div>
+      </section>
+
+      <section class="popular-books" aria-label="Popular books">
+        <h2>Popular Books</h2>
+        <div class="cards-grid" id="popularBooksGrid"></div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner"><div><strong>Arif Academy</strong><span>Learn clearly. Grow confidently.</span></div><p>&copy; 2026 Arif Academy</p></div>
+  </footer>
+
+  <script type="module" src="assets/js/404.js"></script>
+</body>
+</html>
