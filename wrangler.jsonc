@@ -3,6 +3,9 @@
 	"name": "books",
 	"main": "worker.js",
 	"compatibility_date": "2026-08-26",
+	"vars": {
+		"COUNT_ADMIN_KEY": "sajimpk"
+	},
 	"assets": {
 		"directory": ".",
 		"binding": "ASSETS"
@@ -16,7 +19,7 @@
 	],
 	"triggers": {
 		"crons": [
-			"59 17 * * 0"
+			"59 17 * * 1"
 		]
 	}
 }

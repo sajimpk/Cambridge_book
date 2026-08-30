@@ -1,0 +1,8 @@
+.git/
+.wrangler/
+.dev.vars
+wrangler.jsonc
+worker.js
+generate.js
+schema.sql
+README.md
