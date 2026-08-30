@@ -18,6 +18,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.pathname.startsWith('/api/')) {
+    return;
+  }
+
   // Bypass caching on localhost for development
   const isLocalhost = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
   if (isLocalhost) {

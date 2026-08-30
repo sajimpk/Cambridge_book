@@ -1,8 +1,28 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "books",
-  "compatibility_date": "2026-08-26",
-  "assets": {
-    "directory": "."
-  }
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "books",
+	"main": "worker.js",
+	"compatibility_date": "2026-08-26",
+	"assets": {
+		"directory": ".",
+		"binding": "ASSETS"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "clickcount",
+			"database_id": "e451df9b-f20b-4114-ad75-368bc619238d"
+		},
+		{
+			"binding": "clickcount",
+			"database_name": "clickcount",
+			"database_id": "f8ea710c-b725-408a-8814-2639e5192635",
+			"remote": true
+		}
+	],
+	"triggers": {
+		"crons": [
+			"59 17 * * 0"
+		]
+	}
 }

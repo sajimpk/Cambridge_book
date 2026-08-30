@@ -1,5 +1,5 @@
 const whatsappNumber = '8801711777508';
-const purchaseMessage = 'Hello Arif Academy, I want to purchase Unlimited IELTS Mock Test.';
+const purchaseMessage = 'Hello Arif Academy, I want to purchase the Unlimited IELTS Mock Test package.';
 
 function updateWhatsAppLinks() {
   document.querySelectorAll('a[href*="wa.me/"]').forEach((link) => {
