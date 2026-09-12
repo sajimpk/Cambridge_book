@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Partner Site - Book Reader</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f8fafc;
+      margin: 0;
+      padding: 2rem 1rem;
+    }
+    .header-nav {
+      max-width: 800px;
+      margin: 0 auto 1.5rem auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .back-link {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-nav">
+    <a href="/demo-site" class="back-link">← Back to Partner Library</a>
+    <span style="font-size: 0.85rem; color: #64748b;">Secured with BookBridge API</span>
+  </div>
+
+  <!-- Auto-rendered container for book reader -->
+  <div id="book-reader-container"></div>
+
+  <!-- Embed script loaded with API Key -->
+  <script 
+    src="/api/embed.js?key=sajimpk" 
+    data-api-key="sajimpk" 
+    data-site-url="/demo-site"
+    defer
+  ></script>
+</body>
+</html>

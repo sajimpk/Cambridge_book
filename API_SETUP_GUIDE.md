@@ -1,167 +1,194 @@
-# ⚡ API Setup & Integration Guide
+# ⚡ API Setup & Third-Party Integration Guide
 
-এই গাইডে প্রজেক্টের সমস্ত API এন্ডপয়েন্ট, অথেনটিকেশন, ডাইনামিক লিঙ্ক জেনারেশন এবং বাহ্যিক ওয়েবসাইটে ইন্টিগ্রেশনের সম্পূর্ণ নিয়ম দেওয়া হলো।
+এই গাইডে প্রজেক্টের সমস্ত API এন্ডপয়েন্ট, **API Key সিকিউরিটি**, ডাইনামিক ১.৫ সেকেন্ড টোকেন জেনারেশন এবং **থার্ড-পার্টি ওয়েবসাইটে (`theirsite/book/...`) যুক্ত করার সম্পূর্ণ নিয়মাবলী** দেওয়া হলো।
 
 ---
 
-## 🔑 অথেনটিকেশন (Authentication)
+## 🔒 API Key সিকিউরিটি ও নীতিমালা
 
-সুরক্ষিত API এন্ডপয়েন্টগুলো অ্যাক্সেস করতে API Key প্রদান করা বাধ্যতামূলক।
+> [!IMPORTANT]
+> **API Key ছাড়া কোনো থার্ড-পার্টি ওয়েবসাইট এই সার্ভিসের কোনো বই, লিঙ্ক বা স্ক্রিপ্ট ব্যবহার করতে পারবে না।**
+> API Key ছাড়া রিকোয়েস্ট পাঠালে সার্ভার থেকে `401 Unauthorized` রিটার্ন করা হবে।
 
-API Key পাঠানোর দুটি পদ্ধতি রয়েছে:
-
-1. **HTTP Header (উত্তম পদ্ধতি):**
-   ```http
-   x-api-key: sajimpk
+### API Key পাঠানোর ৩টি উপায়:
+1. **Script Tag URL ও Attribute (থার্ড-পার্টি সাইটের জন্য সবচেয়ে সহজ):**
+   ```html
+   <script src="https://your-worker.workers.dev/api/embed.js?key=YOUR_API_KEY" data-api-key="YOUR_API_KEY" defer></script>
    ```
-   *অথবা Authorization Header:*
+2. **HTTP Header (সার্ভার বা API কলের জন্য):**
    ```http
-   Authorization: Bearer sajimpk
+   x-api-key: YOUR_API_KEY
    ```
-
-2. **Query Parameter (সহজ পদ্ধতি):**
+   *অথবা:*
+   ```http
+   Authorization: Bearer YOUR_API_KEY
+   ```
+3. **Query Parameter:**
    ```text
-   ?key=sajimpk
+   ?key=YOUR_API_KEY
    # অথবা
-   ?api_key=sajimpk
+   ?api_key=YOUR_API_KEY
    ```
 
 ---
 
-## 📡 API এন্ডপয়েন্ট রেফারেন্স (API Endpoints)
+## 🌐 থার্ড-পার্টি ওয়েবসাইটে যুক্ত করার নিয়ম
 
-### ১. সব Data Books আইডি লিস্ট পাওয়া (`/api/data-books`)
-এই এন্ডপয়েন্টটি সমস্ত বইয়ের কী/আইডিগুলোর একটি ক্লিন অ্যারে রিটার্ন করে।
+আমাদের Embed ইঞ্জিন দুটি সুবিধাজনক মোডে কাজ করে:
+1. **API Key দিলে:** থার্ড-পার্টি সাইটের নিজস্ব ডোমেইনে (`theirsite.com/book/?book=...`) বইয়ের লিংক ওপেন হবে।
+2. **API Key না দিলে:** লিংক স্বয়ংক্রিয়ভাবে আপনার **মূল API ডোমেইনে (`https://books.sajim-arifacademy.workers.dev/book/?book=...`)** রিডাইরেক্ট হয়ে বইয়ের লাইব্রেরি ওপেন করবে।
 
+---
+
+### মোড ১: API Key ছাড়া (সরাসরি API ডোমেইনে Redirect)
+থার্ড-পার্টি সাইটে আলাদা কোনো `/book/` পেজ বানানোর প্রয়োজন নেই। যেকোনো লিঙ্কে ক্লিক করলে ব্যবহারকারী সরাসরি মূল API ডোমেইনে গিয়ে বইটি পড়বে:
+
+```html
+<!-- ১. পেজের বাটন বা লিংক -->
+<a href="#" class="btn" data-book="cambridge-ielts-19">
+  📖 Read Cambridge IELTS 19
+</a>
+
+<!-- ২. স্ক্রিপ্ট ট্যাগ (কোনো API Key ছাড়াই কাজ করবে) -->
+<script 
+  src="https://books.sajim-arifacademy.workers.dev/api/embed.js" 
+  defer
+></script>
+```
+> 🎯 **কী ঘটবে?**  
+> ব্যবহারকারী লিংকে ক্লিক করামাত্র মূল ডোমেইনে রিডাইরেক্ট হবে:  
+> `https://books.sajim-arifacademy.workers.dev/book/?book=TOKEN`
+
+---
+
+### মোড ২: API Key সহ (নিজস্ব সাইটের ডোমেইনে: `theirsite.com/book/`)
+পার্টনার সাইট যদি তাদের নিজস্ব ডোমেইনে ব্র্যান্ডেড রিডার রাখতে চায়:
+
+#### ধাপ ১: তাদের সাইটের পেজে বাটন ও স্ক্রিপ্ট ট্যাগ (API Key সহ)
+```html
+<a href="#" class="btn" data-book="cambridge-ielts-19">
+  📖 Read Cambridge IELTS 19
+</a>
+
+<script 
+  src="https://books.sajim-arifacademy.workers.dev/api/embed.js" 
+  data-api-key="sajimpk" 
+  defer
+></script>
+```
+> 🎯 **কী ঘটবে?**  
+> API Key থাকার কারণে লিংক স্বয়ংক্রিয়ভাবে তাদের নিজস্ব ডোমেইনে পয়েন্ট করবে:  
+> `https://theirsite.com/book/?book=TOKEN`
+
+#### ধাপ ২: পার্টনার সাইটে নিজস্ব রিডার পেজ তৈরি (`theirsite.com/book/index.html`)
+পার্টনার সাইটের `book/index.html` ফাইলে নিচের কোডটুকু বসিয়ে দিলেই অটোমেটিক ফুল রিডার চালু হয়ে যাবে:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IELTS Book Reader</title>
+</head>
+<body style="font-family: system-ui, sans-serif; background: #f8fafc; margin: 0; padding: 2rem 1rem;">
+  
+  <!-- ১. রিডার কন্টেইনার -->
+  <div id="book-reader-container"></div>
+
+  <!-- ২. Embed Script (API Key সহ) -->
+  <script 
+    src="https://books.sajim-arifacademy.workers.dev/api/embed.js" 
+    data-api-key="sajimpk" 
+    defer
+  ></script>
+
+</body>
+</html>
+```
+
+*এই স্ক্রিপ্টটি URL থেকে ১.৫ সেকেন্ডের টোকেনটি নিয়ে আমাদের সিকিউর API থেকে বইয়ের টাইটেল, কভার ইমেজ, ডেসক্রিপশন এবং অনলাইন রিডিং/ডাউনলোড বাটন স্বয়ংক্রিয়ভাবে রেন্ডার করবে।*
+
+---
+
+## 📡 সার্ভার-টু-সার্ভার API এন্ডপয়েন্টস
+
+### ১. সব বইয়ের আইডি লিস্ট পাওয়া (`/api/data-books`)
 - **পদ্ধতি (Method):** `GET`
 - **URL:** `/api/data-books?key=YOUR_API_KEY`
-- **বিকল্প পাথসমূহ:** `/api/data-book`, `/api/tags`
+- **বিকল্প পাথ:** `/api/data-book`, `/api/tags`
 
-#### cURL উদাহরণ:
 ```bash
 curl -X GET "https://your-worker.workers.dev/api/data-books" \
   -H "x-api-key: sajimpk"
 ```
 
-#### Response Example:
+#### Response:
 ```json
 [
-  "cambridge-ielts-1-academic",
-  "cambridge-ielts-2-academic",
-  "cambridge-ielts-3-academic",
-  "cambridge-ielts-19-academic",
-  "ielts-trainer-1",
-  "official-cambridge-guide-to-ielts"
+  "cambridge-ielts-01",
+  "cambridge-ielts-02",
+  "cambridge-ielts-18",
+  "cambridge-ielts-19"
 ]
 ```
 
 ---
 
-### ২. ডাইনামিক ১.৫ সেকেন্ড টোকেন ও লিঙ্ক তৈরি (`/api/books/resolve`)
-যেকোনো নির্দিষ্ট বইয়ের নাম বা আইডি পাঠালে এটি বুক ডিটেইলস এবং ক্ষণস্থায়ী ডাইনামিক রিডাইরেক্ট লিঙ্ক রিটার্ন করে।
+### ২. ডাইনামিক লিঙ্ক রেজল্যুশন API (`/api/books/resolve`)
+থার্ড-পার্টি সাইট তাদের ব্যাকএন্ড থেকে কল করে সরাসরি তাদের সাইটের কাস্টম ফরম্যাটেড লিঙ্ক পেতে পারে:
 
 - **পদ্ধতি (Method):** `GET` অথবা `POST`
-- **URL:** `/api/books/resolve?id=cambridge-ielts-19-academic&key=YOUR_API_KEY`
+- **URL:** `/api/books/resolve?id=cambridge-ielts-19&key=YOUR_API_KEY&site_url=https://theirsite.com`
 - **বিকল্প পাথ:** `/api/book-link`
-- **কাস্টম সাইট URL প্যারামিটার (Optional):** `?site_url=https://site.com` অথবা `?base_url=https://site.com` *(ব্রাউজার থেকে কল করলে `Origin` / `Referer` হেডার দেখে স্বয়ংক্রিয়ভাবে আপনার সাইট ডিটেক্ট করে নেবে)*
 
-#### GET Request (cURL):
 ```bash
-curl -X GET "https://your-worker.workers.dev/api/books/resolve?id=cambridge-ielts-19-academic&site_url=https://site.com" \
-  -H "x-api-key: sajimpk"
+curl -X GET "https://your-worker.workers.dev/api/books/resolve?id=cambridge-ielts-19&key=sajimpk&site_url=https://theirsite.com"
 ```
 
-#### POST Request (JSON):
-```bash
-curl -X POST "https://your-worker.workers.dev/api/books/resolve" \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: sajimpk" \
-  -d '{
-    "id": "cambridge-ielts-19-academic",
-    "site_url": "https://site.com"
-  }'
-```
-
-#### Response Example:
+#### Response:
 ```json
 {
   "success": true,
-  "id": "cambridge-ielts-19-academic",
-  "title": "Cambridge IELTS 19 Academic",
-  "category": "Cambridge Academic",
-  "token": "mty8m2xy.KCMoHgUHBX92J2RhU0JaDWtjKX0kFAk",
-  "url": "https://site.com/book/?book=mty8m2xy.KCMoHgUHBX92J2RhU0JaDWtjKX0kFAk",
-  "path": "/book/?book=mty8m2xy.KCMoHgUHBX92J2RhU0JaDWtjKX0kFAk",
-  "relative_url": "/book/?book=mty8m2xy.KCMoHgUHBX92J2RhU0JaDWtjKX0kFAk"
+  "id": "cambridge-ielts-19",
+  "title": "Cambridge IELTS 19",
+  "category": "IELTS",
+  "token": "mtybxtkp.QUQxNTwoHBQPQA16en1zFgMMUEQnPQ",
+  "url": "https://theirsite.com/book/?book=mtybxtkp.QUQxNTwoHBQPQA16en1zFgMMUEQnPQ",
+  "path": "/book/?book=mtybxtkp.QUQxNTwoHBQPQA16en1zFgMMUEQnPQ",
+  "relative_url": "/book/?book=mtybxtkp.QUQxNTwoHBQPQA16en1zFgMMUEQnPQ"
 }
 ```
-> ⏱️ **নোট:** 
-> 1. আপনার সাইট (`site.com`) থেকে API কল করলে রিটার্ন করা `url` স্বয়ংক্রিয়ভাবে `https://site.com/book/?book=...` আকারে আসবে (worker ডোমেইন নয়)।
-> 2. নিরাপত্তা ও কপিরাইট সুরক্ষার জন্য জেনারেট করা ডাইনামিক লিঙ্কটি সর্বোচ্চ **১.৫ সেকেন্ড** কার্যকর থাকে। এর পর লিঙ্কটি স্বয়ংক্রিয়ভাবে `404 Link Not Found` পেজে পাঠাবে।
 
 ---
 
-### ৩. ক্লিক ট্র্যাকিং ও অ্যানালিটিক্স API (`/api/claim-clicks`)
+### ৩. একক বইয়ের ডিটেইলস API (`/api/book-info`)
+বইয়ের পূর্ণাঙ্গ তথ্য ও ডাউনলোড লিঙ্ক পাওয়ার জন্য:
 
-- **GET `/api/claim-clicks?days=30`**: বিগত ৩০ দিনের ক্লিক রিপোর্ট।
-- **POST `/api/claim-clicks`**: অফার ক্লেইম ক্লিক কাউন্ট বাড়ানো।
-- **DELETE `/api/claim-clicks`**: পুরোনো ডাটা ক্লিন করা (Admin Key প্রয়োজন)।
+- **পদ্ধতি (Method):** `GET`
+- **URL:** `/api/book-info?id=cambridge-ielts-19&key=YOUR_API_KEY`
+- **বিকল্প পাথ:** `/api/book-details`
 
-#### Admin Header:
-```http
-x-admin-key: sajimpk
+```bash
+curl -X GET "https://your-worker.workers.dev/api/book-info?id=cambridge-ielts-19&key=sajimpk"
 ```
 
----
-
-## 🌐 বাহ্যিক ওয়েবসাইটে ইন্টিগ্রেশন (External Site Integration)
-
-যেকোনো ওয়েবসাইটে বই পড়ার ডাইনামিক লিঙ্ক সহজে যুক্ত করার দুটি নিয়ম রয়েছে:
-
-### পদ্ধতি ১: অটোমেটিক Embed Script (সবচেয়ে সহজ)
-আপনার ওয়েবসাইটের HTML পেজে নিচের স্ক্রিপ্টটি যুক্ত করুন:
-
-```html
-<!-- HTML এ বাটন বা লিঙ্ক যোগ করুন -->
-<a href="#" class="read-btn" data-book="cambridge-ielts-19-academic">
-  📖 Read Book Online
-</a>
-
-<!-- Embed Script যুক্ত করুন (এটি স্বয়ংক্রিয়ভাবে আপনার সাইটের https://site.com/book/ লিঙ্ক তৈরি করবে) -->
-<script src="https://your-worker.workers.dev/api/embed.js"></script>
-```
-*এই স্ক্রিপ্টটি আপনার নিজের সাইটের ডোমেইনে (`site.com/book/`) ক্লিক করার মুহূর্তে ১.৫ সেকেন্ডের ডাইনামিক এনক্রিপ্টেড টোকেন তৈরি করে সুরক্ষিতভাবে ওপেন করবে।*
-
----
-
-### পদ্ধতি ২: JavaScript Fetch দিয়ে ম্যানুয়াল কল
-```javascript
-async function openSecureBook(bookId) {
-  try {
-    const response = await fetch(`https://your-worker.workers.dev/api/books/resolve?id=${encodeURIComponent(bookId)}`, {
-      headers: {
-        'x-api-key': 'sajimpk'
-      }
-    });
-
-    const data = await response.json();
-    if (data.success && data.url) {
-      window.location.href = data.url; // ওপেন করুন
-    } else {
-      alert('বইটি পাওয়া যায়নি।');
-    }
-  } catch (error) {
-    console.error('Error opening book:', error);
-  }
+#### Response:
+```json
+{
+  "success": true,
+  "id": "cambridge-ielts-19",
+  "title": "Cambridge IELTS 19",
+  "description": "Official Cambridge IELTS 19 Practice Tests...",
+  "category": "IELTS",
+  "image": "https://www.ieltsbuddy.com/images/cambridge-ielts-books.jpg",
+  "download": "http://sharelink.ng/sM2c"
 }
-
-// ব্যবহার:
-// openSecureBook('cambridge-ielts-19-academic');
 ```
 
 ---
 
-## 🔒 সিকিউরিটি নিয়মাবলী (Security Guidelines)
-1. **API Key গোপন রাখুন**: পাবলিক ফ্রন্ট-এন্ডে সরাসরি মাস্টার অ্যাডমিন কী প্রকাশ করবেন না।
-2. **Strict Expiration**: টোকেন জেনারেশনের সময় ও ব্রাউজারে খোলার সময়ের ব্যবধান ১.৫ সেকেন্ডের বেশি হলে লিঙ্ক এক্সপায়ার হবে।
-3. **No Caching**: ক্লাউডফ্লেয়ার ও ব্রাউজারে `Cache-Control: no-store` হেডার সবসময় একটিভ রাখা আছে।
+## ⚙️ নিরাপত্তা ও টোকেন এক্সপাইরি নীতি
+1. **১.৫ সেকেন্ড কঠোর এক্সপায়ারি (1.5s Strict Expiry):** লিংক বা টোকেন তৈরি হওয়ার ১.৫ সেকেন্ডের মধ্যে ব্রাউজারে ভ্যালিডেশন হতে হবে। মেয়াদোত্তীর্ণ বা রিউজ লিঙ্ক সরাসরি `404 Link Expired` পেজে রিডাইরেক্ট হবে।
+2. **API Key সিকিউরিটি:** অনুমোদিত API Key ব্যতীত যেকোনো থার্ড-পার্টি স্ক্রিপ্ট লোড ও ডাটা রিকোয়েস্ট ব্লক থাকবে।
+3. **No-Cache সুরক্ষা:** সমস্ত রেসপন্সে `Cache-Control: no-store, no-cache, must-revalidate` সক্রিয় থাকবে।

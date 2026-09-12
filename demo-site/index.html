@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Third-Party Partner Site Demo</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --surface: #ffffff;
+      --bg: #f8fafc;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .header {
+      background: var(--surface);
+      padding: 2rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      margin-bottom: 2rem;
+    }
+    .badge {
+      display: inline-block;
+      background: #eff6ff;
+      color: var(--primary);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.85rem;
+      color: var(--text);
+    }
+    p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-top: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--surface);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+    .card h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.15rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn:hover {
+      background: #1d4ed8;
+    }
+    .notice-box {
+      background: #f1f5f9;
+      border-left: 4px solid var(--primary);
+      padding: 1rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.9rem;
+      color: #334155;
+      margin-bottom: 2rem;
+    }
+    code {
+      background: #e2e8f0;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span class="badge">External Site Simulation</span>
+      <h1>Third-Party Website (Partner Site)</h1>
+      <p>
+        This demo simulates a 3rd-party website embedding IELTS books. Notice that links dynamically point to <code>/demo-site/book/?book=...</code> with short-lived 1.5s cryptographic tokens.
+      </p>
+    </div>
+
+    <div class="notice-box">
+      <strong>🔒 API Key Integration Active:</strong> <code>data-api-key="sajimpk"</code><br/>
+      Hovering or clicking any button below automatically creates a fresh 0ms token pointing to your site's book page (<code>/demo-site/book/</code>).
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div>
+          <h3>Cambridge IELTS 19</h3>
+          <p>Official practice tests with full answer keys and audio resources.</p>
+        </div>
+        <!-- Link with data-book attribute -->
+        <a class="btn" href="#" data-book="cambridge-ielts-19">
+          📖 Read Online
+        </a>
+      </div>
+
+      <div class="card">
+        <div>
+          <h3>Cambridge IELTS 18</h3>
+          <p>Complete exam papers with authentic audio transcripts.</p>
+        </div>
+        <a class="btn" href="#" data-book="cambridge-ielts-18">
+          📖 Read Online
+        </a>
+      </div>
+
+      <div class="card">
+        <div>
+          <h3>Cambridge IELTS 01</h3>
+          <p>The classic practice tests for Academic and General Training.</p>
+        </div>
+        <a class="btn" href="#" data-book="cambridge-ielts-01">
+          📖 Read Online
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Third-party script embed with API Key -->
+  <script 
+    src="/api/embed.js?key=sajimpk" 
+    data-api-key="sajimpk" 
+    data-site-url="/demo-site"
+    defer
+  ></script>
+</body>
+</html>

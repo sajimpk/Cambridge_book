@@ -393,10 +393,46 @@ export default {
       });
     }
 
+    // Book details API for third-party websites (Protected by API Key)
+    if (url.pathname === '/api/book-info' || url.pathname === '/api/book-details') {
+      if (!hasValidApiKey(request, env, url)) {
+        return json({ error: 'Unauthorized: Invalid or missing API key. Pass x-api-key header or ?key= parameter.' }, { status: 401 });
+      }
+
+      const booksData = await getBooksData(env, url.origin);
+      const bookId = url.searchParams.get('id') || url.searchParams.get('book');
+      if (!bookId) {
+        return json({ error: 'Missing book id parameter. Pass ?id=book-id or ?book=TOKEN' }, { status: 400 });
+      }
+
+      const validation = validateToken(bookId);
+      const targetKey = validation.bookId || (booksData[bookId] ? bookId : null);
+      if (!targetKey || !booksData[targetKey]) {
+        return json({ error: 'Book not found or token expired.', id: bookId }, { status: 404 });
+      }
+
+      const book = booksData[targetKey];
+      return json({
+        success: true,
+        id: targetKey,
+        title: book.title,
+        description: book.description,
+        category: book.category || 'IELTS',
+        image: book.image,
+        download: book.download,
+        extraDescription: book.extraDescription || null
+      });
+    }
+
     // Embed Script route for external websites
     if (url.pathname === '/api/embed.js') {
       const embedScriptUrl = new URL('/assets/js/embed.js', url.origin);
-      return env.ASSETS.fetch(new Request(embedScriptUrl, request));
+      const scriptRes = await env.ASSETS.fetch(new Request(embedScriptUrl, request));
+      const headers = new Headers(scriptRes.headers);
+      headers.set('access-control-allow-origin', '*');
+      headers.set('cache-control', 'no-store');
+      headers.set('content-type', 'application/javascript; charset=utf-8');
+      return new Response(scriptRes.body, { ...scriptRes, headers });
     }
 
     if (url.pathname === '/api/claim-clicks/countries') {

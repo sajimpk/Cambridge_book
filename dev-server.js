@@ -186,6 +186,47 @@ function resolveCallerBaseUrl(req, url, body = {}) {
     return handleResolve(bookId);
   }
 
+  // API Endpoint: /api/book-info or /api/book-details (Protected by API Key)
+  if (url.pathname === '/api/book-info' || url.pathname === '/api/book-details') {
+    if (!checkApiKey(req, url)) {
+      return sendJson(res, 401, { error: 'Unauthorized: Invalid or missing API key.' });
+    }
+    const booksData = getBooksData();
+    const bookId = url.searchParams.get('id') || url.searchParams.get('book');
+    if (!bookId) {
+      return sendJson(res, 400, { error: 'Missing book id parameter. Pass ?id=book-id or ?book=TOKEN' });
+    }
+    const validation = validateToken(bookId);
+    const targetKey = validation.bookId || (booksData[bookId] ? bookId : null);
+    if (!targetKey || !booksData[targetKey]) {
+      return sendJson(res, 404, { error: 'Book not found or token expired.', id: bookId });
+    }
+    const book = booksData[targetKey];
+    return sendJson(res, 200, {
+      success: true,
+      id: targetKey,
+      title: book.title,
+      description: book.description,
+      category: book.category || 'IELTS',
+      image: book.image,
+      download: book.download,
+      extraDescription: book.extraDescription || null
+    });
+  }
+
+  // API Endpoint: /api/embed.js
+  if (url.pathname === '/api/embed.js') {
+    const filePath = path.join(__dirname, 'assets', 'js', 'embed.js');
+    if (fs.existsSync(filePath)) {
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        ...NO_CACHE_HEADERS
+      });
+      return fs.createReadStream(filePath).pipe(res);
+    }
+  }
+
   // Route /data-book -> data-book.html
   if (url.pathname === '/data-book' || url.pathname === '/data-book/') {
     const filePath = path.join(__dirname, 'data-book.html');
