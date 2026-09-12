@@ -29,30 +29,30 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-// We only want ONE dynamic book page, located under cambridge-ielts
-// Delete all other book folders that might exist from previous generations
-Object.keys(booksData).concat(['cambridge-ielts-01']).forEach((key) => {
-  if (key !== 'cambridge-ielts') {
-    const bookDir = path.join(__dirname, key);
-    if (fs.existsSync(bookDir)) {
-      fs.rmSync(bookDir, { recursive: true, force: true });
+// We only want ONE dynamic book page, located under book
+// Delete old folders that might exist from previous generations
+Object.keys(booksData).concat(['cambridge-ielts', 'cambridge-ielts-01']).forEach((key) => {
+  if (key !== 'book') {
+    const oldDir = path.join(__dirname, key);
+    if (fs.existsSync(oldDir) && key === 'cambridge-ielts') {
+      fs.rmSync(oldDir, { recursive: true, force: true });
       console.log(`Removed old folder: ${key}`);
     }
   }
 });
 
-// Now generate ONLY the cambridge-ielts folder as the dynamic template
-const key = 'cambridge-ielts';
+// Now generate the book folder as the dynamic template
+const key = 'book';
 const bookDir = path.join(__dirname, key);
 if (fs.existsSync(bookDir)) {
   fs.rmSync(bookDir, { recursive: true, force: true });
 }
 fs.mkdirSync(bookDir, { recursive: true });
 
-const title = "Cambridge IELTS • Arif Academy";
+const title = "Book Details";
 const desc = "Open a PDF redirect page with full book details.";
 const image = "../assets/images/placeholder.svg";
-const bookUrl = `https://arifacademy.com/book/cambridge-ielts`;
+const bookUrl = `./`;
 
 let pageHtml = templateHtml
   // 1. Replace assets/ and data/ relative paths to go up one directory (../)
@@ -65,14 +65,14 @@ let pageHtml = templateHtml
   .replace(/<title id="pageTitle">.*?<\/title>/, `<title id="pageTitle">${escapeHtml(title)}</title>`)
   .replace(/<meta name="description" id="metaDescription" content=".*?" \/>/, `<meta name="description" id="metaDescription" content="${escapeHtml(desc)}" />`)
   .replace(/<link rel="canonical" id="canonicalLink" href=".*?" \/>/, `<link rel="canonical" id="canonicalLink" href="${escapeHtml(bookUrl)}" />`)
-  .replace(/<meta property="og:title" id="ogTitle" content=".*?" \/>/, `<meta property="og:title" id="ogTitle" content="Cambridge IELTS • Arif Academy" />`)
+  .replace(/<meta property="og:title" id="ogTitle" content=".*?" \/>/, `<meta property="og:title" id="ogTitle" content="${escapeHtml(title)}" />`)
   .replace(/<meta property="og:description" id="ogDescription" content=".*?" \/>/, `<meta property="og:description" id="ogDescription" content="${escapeHtml(desc)}" />`)
   .replace(/<meta property="og:url" id="ogUrl" content=".*?" \/>/, `<meta property="og:url" id="ogUrl" content="${escapeHtml(bookUrl)}" />`)
   .replace(/<meta property="og:image" id="ogImage" content=".*?" \/>/, `<meta property="og:image" id="ogImage" content="${escapeHtml(image)}" />`)
-  .replace(/<meta name="twitter:title" id="twitterTitle" content=".*?" \/>/, `<meta name="twitter:title" id="twitterTitle" content="Cambridge IELTS • Arif Academy" />`)
+  .replace(/<meta name="twitter:title" id="twitterTitle" content=".*?" \/>/, `<meta name="twitter:title" id="twitterTitle" content="${escapeHtml(title)}" />`)
   .replace(/<meta name="twitter:description" id="twitterDescription" content=".*?" \/>/, `<meta name="twitter:description" id="twitterDescription" content="${escapeHtml(desc)}" />`);
 
-// Write index.html to cambridge-ielts-01/index.html
+// Write index.html to book/index.html
 const outputFilePath = path.join(bookDir, 'index.html');
 fs.writeFileSync(outputFilePath, pageHtml, 'utf8');
 console.log(`Generated: ${path.relative(__dirname, outputFilePath)}`);

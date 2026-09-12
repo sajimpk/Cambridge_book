@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>All Books List • Arif Academy</title>
-  <meta name="description" content="View the complete list of available books in the Arif Academy library." />
+  <title>All Books List</title>
+  <meta name="description" content="View the complete list of available books in the library." />
   <link rel="stylesheet" href="../assets/css/styles.css" />
 </head>
 <body class="page-shell" data-theme="light">
@@ -26,13 +26,14 @@
   </div>
 
   <footer class="site-footer">
-    <div class="site-footer__inner"><div><strong>Arif Academy</strong><span>Comprehensive practice materials</span></div><p>&copy; 2026 Arif Academy</p></div>
+    <div class="site-footer__inner"><div><strong>Book Library</strong><span>Comprehensive practice materials</span></div><p>&copy; 2026 Book Library</p></div>
   </footer>
 
   <script type="module">
     import { registerServiceWorker } from '../assets/js/pwa.js';
     import { initSponsoredAds, isGeoBlocked } from '../assets/js/vendor-core.js';
     import { initSiteLocalization } from '../assets/js/site-language.js';
+    import { encodeBookId } from '../assets/js/url-helper.js';
 
     const listContainer = document.getElementById('bookListContainer');
     const themeToggle = document.getElementById('themeToggle');
@@ -95,7 +96,7 @@
               <span style="font-weight: 800; font-size: 1rem; color: var(--text);">${book.title}</span>
               <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;">${book.category || 'IELTS'}</span>
             </div>
-            <a href="../cambridge-ielts/?book=${encodeURIComponent(key)}" class="button button-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 8px; font-weight: 700;">Open Book</a>
+            <a href="../book/?book=${encodeBookId(key)}" class="button button-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 8px; font-weight: 700;">Open Book</a>
           </li>
         `).join('');
       } catch (error) {

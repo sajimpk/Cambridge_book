@@ -2889,5 +2889,553 @@ body { top: 0 !important; }
   .global-offer-bar.is-compact-fixed .daily-offer-timer--featured { animation: none !important; }
 }
 
+/* --- URL Expiry & 1-Minute Rotation Alert Modal --- */
+.rotation-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rotation-modal.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.rotation-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.rotation-modal__content {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6), 0 0 40px rgba(56, 189, 248, 0.15);
+  max-width: 480px;
+  width: 100%;
+  padding: 2.25rem 2rem;
+  text-align: center;
+  transform: scale(0.92) translateY(10px);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1;
+}
+
+.rotation-modal.is-active .rotation-modal__content {
+  transform: scale(1) translateY(0);
+}
+
+.rotation-modal__icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.25rem;
+  background: rgba(245, 158, 11, 0.15);
+  border: 2px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: modalIconPulse 2s infinite ease-in-out;
+}
+
+@keyframes modalIconPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+  50% { transform: scale(1.06); box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
+}
+
+.rotation-modal__header h3 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.rotation-modal__header p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 0.35rem;
+}
+
+.rotation-modal__subtext {
+  font-size: 0.82rem !important;
+  color: #ef4444 !important;
+  font-weight: 600;
+  margin-top: 0.35rem;
+}
+
+.rotation-modal__countdown {
+  margin: 1.5rem 0;
+  background: var(--surface-strong);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.rotation-modal__countdown .timer-tag {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.rotation-modal__countdown strong {
+  color: #f59e0b;
+  font-size: 1.1rem;
+  font-family: monospace;
+}
+
+.rotation-modal__progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.rotation-modal__progress-bar .progress-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  transition: width 1s linear;
+}
+
+.rotation-modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn-rotation {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.btn-rotation--yes {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-rotation--yes:hover {
+  background: linear-gradient(135deg, #38bdf8 0%, #1d4ed8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+}
+
+.btn-rotation--no {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.btn-rotation--no:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Toast notification for URL update success */
+.rotation-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: #0f172a;
+  border: 1px solid #38bdf8;
+  color: #f8fafc;
+  padding: 0.85rem 1.5rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 9999999;
+  font-size: 0.9rem;
+  font-weight: 600;
+  animation: toastSlideUp 0.3s ease-out;
+}
+
+@keyframes toastSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- 404 Page & Go To Book Buttons --- */
+.notfound-page {
+  padding: 3rem 1rem 5rem;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.notfound-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  max-width: 620px;
+  margin: 0 auto 3.5rem;
+}
+
+.notfound-number {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+
+.notfound-panel h2 {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+}
+
+.notfound-panel p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 1.75rem;
+}
+
+.notfound-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.35rem;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.92rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.button-primary {
+  background: linear-gradient(135deg, #a855f7 0%, #3b82f6 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+}
+
+.button-primary:hover {
+  background: linear-gradient(135deg, #c084fc 0%, #2563eb 100%);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+  transform: translateY(-2px);
+}
+
+.button-secondary {
+  background: var(--surface-strong);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.button-secondary:hover {
+  background: var(--surface-muted);
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   PURE CSS 3D BOOK COVER ELEMENT (NO IMAGES USED)
+   ========================================================================== */
+
+.css-book-card {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  aspect-ratio: 1 / 1.42;
+  margin: 0 auto;
+  perspective: 1000px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.css-book-card--large {
+  max-width: 320px;
+  aspect-ratio: 1 / 1.44;
+}
+
+.book-3d-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease;
+  transform: rotateY(-4deg) rotateX(2deg);
+}
+
+.css-book-card:hover .book-3d-wrapper {
+  transform: perspective(1000px) rotateY(-12deg) rotateX(6deg) translateY(-8px) scale(1.02);
+}
+
+/* 3D Book Spine (Left) */
+.book-spine-edge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 16px;
+  background: var(--book-spine, #0f172a);
+  border-radius: 4px 0 0 4px;
+  box-shadow: inset -2px 0 5px rgba(0, 0, 0, 0.4), inset 2px 0 4px rgba(255, 255, 255, 0.15);
+  z-index: 3;
+  overflow: hidden;
+}
+
+.spine-text {
+  display: none;
+}
+
+/* 3D Page Stack (Right & Bottom Edges) */
+.book-pages-stack {
+  position: absolute;
+  top: 4px;
+  right: -8px;
+  bottom: 4px;
+  width: 12px;
+  background: repeating-linear-gradient(
+    to right,
+    #f8fafc 0px,
+    #e2e8f0 1px,
+    #cbd5e1 2px,
+    #ffffff 3px
+  );
+  border-radius: 0 3px 3px 0;
+  box-shadow: 4px 6px 14px rgba(0, 0, 0, 0.25);
+  transform: rotateY(35deg) translateZ(-4px);
+  z-index: 1;
+}
+
+/* Front Cover Surface */
+.book-cover-surface {
+  position: absolute;
+  inset: 0 0 0 14px;
+  background: var(--book-bg, linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%));
+  border-radius: 0 8px 8px 0;
+  padding: 1rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 
+    -4px 0 8px rgba(0, 0, 0, 0.35),
+    0 12px 28px -6px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  z-index: 2;
+  overflow: hidden;
+  color: #ffffff;
+}
+
+/* Gloss & Shimmer Overlay */
+.book-gloss-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.08) 28%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.25) 100%
+  );
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Top Row Header */
+.book-top-row {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.book-brand-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--book-gold, #fbbf24);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.book-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Center Content & Volume Badge */
+.book-center-content {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: auto 0;
+  padding: 0.5rem 0;
+}
+
+.book-series-name {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--book-accent, #38bdf8);
+  margin-bottom: 0.4rem;
+}
+
+.book-volume-badge {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e2e8f0 40%, #94a3b8 100%);
+  border: 3px solid var(--book-gold, #fbbf24);
+  display: grid;
+  place-items: center;
+  box-shadow: 
+    0 4px 14px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.8),
+    0 0 16px rgba(251, 191, 36, 0.35);
+  margin-bottom: 0.6rem;
+  transition: transform 0.3s ease;
+}
+
+.css-book-card--large .book-volume-badge {
+  width: 74px;
+  height: 74px;
+  border-width: 4px;
+}
+
+.css-book-card:hover .book-volume-badge {
+  transform: scale(1.08) rotate(3deg);
+}
+
+.book-volume-number {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.css-book-card--large .book-volume-number {
+  font-size: 2rem;
+}
+
+.book-cover-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.css-book-card--large .book-cover-title {
+  font-size: 1.15rem;
+  -webkit-line-clamp: 3;
+}
+
+/* Bottom Row Footer */
+.book-bottom-row {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.book-feature-tag {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #cbd5e1;
+  text-transform: uppercase;
+}
+
+.book-format-tag {
+  font-size: 0.6rem;
+  font-weight: 800;
+  background: var(--book-gold, #fbbf24);
+  color: #0f172a;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+/* Golden Ribbon Bookmark */
+.book-ribbon-tag {
+  position: absolute;
+  top: 0;
+  right: 18px;
+  width: 14px;
+  height: 28px;
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%);
+  z-index: 6;
+}
+
+.css-book-card--large .book-ribbon-tag {
+  width: 18px;
+  height: 36px;
+  right: 24px;
+}
+
+
+
+
 
 

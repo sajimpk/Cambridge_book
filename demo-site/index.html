@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>External Partner Site • Instant 1.5s Dynamic Link Demo</title>
+  <meta name="description" content="Demo showing per-request unique link generation with 1.5-second instant expiration and 404 protection." />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #070b14;
+      --surface: #0f172a;
+      --surface-border: #1e293b;
+      --surface-hover: #1e293b;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --accent: #818cf8;
+      --accent-pink: #f43f5e;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --code-bg: #030712;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #090d16 50%, #030712 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2.5rem 1rem 5rem;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .badge-bar {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--primary);
+      padding: 0.4rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .badge.timer-badge {
+      background: rgba(244, 63, 94, 0.12);
+      border-color: rgba(244, 63, 94, 0.35);
+      color: #fb7185;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--success);
+      animation: pulseAnim 1.5s infinite;
+    }
+
+    @keyframes pulseAnim {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.85rem;
+      background: linear-gradient(to right, #ffffff, #93c5fd, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.lead {
+      color: var(--text-muted);
+      font-size: 1.15rem;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* Live Rotation Monitor Banner */
+    .rotation-card {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 27, 75, 0.5) 100%);
+      border: 1px solid #334155;
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 2rem;
+      margin-bottom: 2.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .rotation-card__info h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .rotation-card__info p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .rotation-timer-widget {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-md);
+      flex-wrap: wrap;
+    }
+
+    .btn-test-expired {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 0.6rem 1.15rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-test-expired:hover {
+      background: #ef4444;
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.75rem;
+      margin-bottom: 3rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 15px 35px rgba(56, 189, 248, 0.1);
+    }
+
+    .card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .card__tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      background: rgba(129, 140, 248, 0.15);
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .card h3 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .card p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .token-badge-note {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: #38bdf8;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Action buttons with data-book */
+    .btn-auto-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      width: 100%;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 0.85rem 1.25rem;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: all 0.25s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+    }
+
+    .btn-auto-link:hover {
+      background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+      color: #04101e;
+      box-shadow: 0 4px 18px rgba(56, 189, 248, 0.35);
+    }
+
+    .btn-auto-link svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Code Inspector Section */
+    .inspector-panel {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+
+    .inspector-panel h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .code-box {
+      background: var(--code-bg);
+      border: 1px solid #1e293b;
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin-top: 1rem;
+    }
+
+    .code-box code span.tag { color: #f43f5e; }
+    .code-box code span.attr { color: #fbbf24; }
+    .code-box code span.val { color: #34d399; }
+    .code-box code span.comment { color: #64748b; }
+
+    footer {
+      text-align: center;
+      margin-top: 4rem;
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge-bar">
+        <div class="badge"><div class="pulse-dot"></div> Per-Request Dynamic Generation</div>
+        <div class="badge timer-badge">1.5s Strict Expiry</div>
+      </div>
+      <h1>External Static Partner Site</h1>
+      <p class="lead">
+        Each click/request generates a unique, one-time cryptographically hashed token that expires in <strong>1.5 seconds</strong>. If an expired link is opened, it automatically returns <strong>404</strong>.
+      </p>
+    </header>
+
+    <main>
+      <!-- Live 1.5s Token Monitor Banner -->
+      <section class="rotation-card">
+        <div class="rotation-card__info">
+          <h2>
+            <svg width="22" height="22" fill="none" stroke="#38bdf8" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Instant Link Generator & 1.5s Expiration Protection
+          </h2>
+          <p>Links are generated instantly on click with 0ms age. Attempting to reuse or paste after 1.5s returns 404.</p>
+        </div>
+
+        <div class="rotation-timer-widget">
+          <button class="btn-test-expired" id="btnTestExpired" title="Test Opening an Expired Link (>1.5s)">
+            ⏱️ Test Expired Link (> 1.5s) ➔ 404
+          </button>
+        </div>
+      </section>
+
+      <!-- Grid Cards with data-book -->
+      <section class="grid">
+        <!-- Card 1 -->
+        <article class="card">
+          <div>
+            <div class="card__header">
+              <span class="card__tag">IELTS Academic</span>
+            </div>
+            <h3>Cambridge IELTS 1</h3>
+            <p>Official Cambridge practice tests for listening, reading, writing, and speaking.</p>
+          </div>
+          <div>
+            <div class="token-badge-note">
+              ⚡ Instant 0ms Token generated on click
+            </div>
+            <!-- Auto-linked data-book tag -->
+            <a class="btn-auto-link" data-book="cambridge-ielts-01" id="link1">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              <span>Read Cambridge 1</span>
+            </a>
+          </div>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="card">
+          <div>
+            <div class="card__header">
+              <span class="card__tag">IELTS Academic</span>
+            </div>
+            <h3>Cambridge IELTS 16</h3>
+            <p>Latest practice test papers with complete audio transcripts and authentic scoring keys.</p>
+          </div>
+          <div>
+            <div class="token-badge-note">
+              ⚡ Instant 0ms Token generated on click
+            </div>
+            <!-- Auto-linked data-book tag -->
+            <a class="btn-auto-link" data-book="cambridge-ielts-16" id="link16">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              <span>Read Cambridge 16</span>
+            </a>
+          </div>
+        </article>
+
+        <!-- Card 3 -->
+        <article class="card">
+          <div>
+            <div class="card__header">
+              <span class="card__tag">IELTS Academic</span>
+            </div>
+            <h3>Cambridge IELTS 19</h3>
+            <p>Most recent official practice tests with up-to-date question formats and answers.</p>
+          </div>
+          <div>
+            <div class="token-badge-note">
+              ⚡ Instant 0ms Token generated on click
+            </div>
+            <!-- Auto-linked data-book tag -->
+            <a class="btn-auto-link" data-book="cambridge-ielts-19" id="link19">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              <span>Read Cambridge 19</span>
+            </a>
+          </div>
+        </article>
+      </section>
+
+      <!-- Code Inspector -->
+      <section class="inspector-panel">
+        <h2>⚡ How External Websites Integrate:</h2>
+        <p>You write simple <code>data-book="..."</code> links. The embed script generates a fresh 1.5s token at the moment of interaction.</p>
+        
+        <div class="code-box"><code><span class="comment">&lt;!-- 1. Include the embed script in your site --&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"/assets/js/embed.js"</span> <span class="attr">data-api-key</span>=<span class="val">"sajimpk"</span> <span class="attr">defer</span><span class="tag">&gt;&lt;/script&gt;</span>
+
+<span class="comment">&lt;!-- 2. Write your buttons/links with data-book: --&gt;</span>
+<span class="tag">&lt;a</span> <span class="attr">data-book</span>=<span class="val">"cambridge-ielts-01"</span><span class="tag">&gt;</span>Read Cambridge IELTS 1<span class="tag">&lt;/a&gt;</span>
+<span class="tag">&lt;a</span> <span class="attr">data-book</span>=<span class="val">"cambridge-ielts-16"</span><span class="tag">&gt;</span>Read Cambridge IELTS 16<span class="tag">&lt;/a&gt;</span></code></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 External Website Demo • Per-Request Dynamic 1.5s Token Engine</p>
+    </footer>
+  </div>
+
+  <!-- Auto-Sync Script Integration -->
+  <script src="../assets/js/embed.js" data-api-key="sajimpk" defer></script>
+
+  <script>
+    // Test opening an intentionally expired token (e.g. created 3 seconds ago)
+    document.getElementById('btnTestExpired')?.addEventListener('click', () => {
+      if (window.BookBridge && window.BookBridge.generateToken) {
+        // Create an expired token (3 seconds old)
+        const ts = Date.now() - 3000;
+        const tsHex = ts.toString(36);
+        const nonce = Math.floor(Math.random() * 0xFFFF).toString(36);
+        const raw = 'cambridge-ielts-01|' + nonce;
+        const bytes = Array.from(new TextEncoder().encode(raw));
+        const salt = (ts % 127);
+        const xorBytes = bytes.map((b, i) => b ^ (0x5a ^ ((salt + i * 7) & 0x7f)));
+        let binary = '';
+        for (let i = 0; i < xorBytes.length; i++) binary += String.fromCharCode(xorBytes[i]);
+        const enc = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        const expiredToken = tsHex + '.' + enc;
+
+        window.open(`/book/?book=${expiredToken}`, '_blank');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -19,6 +19,9 @@ function json(data, init = {}) {
   const headers = new Headers(init.headers);
   headers.set('content-type', 'application/json; charset=utf-8');
   headers.set('cache-control', 'no-store');
+  headers.set('access-control-allow-origin', '*');
+  headers.set('access-control-allow-methods', 'GET, POST, OPTIONS');
+  headers.set('access-control-allow-headers', 'Content-Type, Authorization, x-api-key');
   return new Response(JSON.stringify(data), { ...init, headers });
 }
 
@@ -134,13 +137,214 @@ async function runAutomaticStorageCleanup(database) {
   });
 }
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+async function getBooksData(env, origin) {
+  try {
+    const res = await env.ASSETS.fetch(new Request(new URL('/data/book.json', origin)));
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.error('Failed to load books data in worker:', err);
+  }
+  return {};
+}
+
+const CIPHER_KEY = 0x5a;
+const EXPIRY_MS = 1500; // Strictly 1.5 seconds (1500ms)
+
+function encodeBookId(id) {
+  if (!id) return '';
+  const ts = Date.now();
+  const tsHex = ts.toString(36);
+  const nonce = Math.floor(Math.random() * 0xFFFF).toString(36);
+  const raw = id + '|' + nonce;
+  const bytes = Array.from(new TextEncoder().encode(raw));
+  const salt = (ts % 127);
+  const xorBytes = bytes.map((b, i) => b ^ (CIPHER_KEY ^ ((salt + i * 7) & 0x7f)));
+  let binary = '';
+  for (let i = 0; i < xorBytes.length; i++) {
+    binary += String.fromCharCode(xorBytes[i]);
+  }
+  const enc = btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+  return tsHex + '.' + enc;
+}
+
+function validateToken(token) {
+  if (!token) return { valid: false, reason: 'missing', bookId: null, expired: true };
+  const parts = String(token).split('.');
+  if (parts.length === 2) {
+    const ts = parseInt(parts[0], 36);
+    if (ts && !isNaN(ts)) {
+      const now = Date.now();
+      const age = now - ts;
+      const isFresh = age >= -300 && age <= EXPIRY_MS;
+
+      let str = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (str.length % 4) str += '=';
+
+      try {
+        const binary = atob(str);
+        const salt = (ts % 127);
+        const decodedBytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          decodedBytes[i] = binary.charCodeAt(i) ^ (CIPHER_KEY ^ ((salt + i * 7) & 0x7f));
+        }
+
+        const decoded = new TextDecoder().decode(decodedBytes);
+        const pipeIdx = decoded.indexOf('|');
+        if (pipeIdx > 0) {
+          const id = decoded.slice(0, pipeIdx);
+          if (/^[a-zA-Z0-9_-]+$/.test(id)) {
+            return {
+              valid: isFresh,
+              bookId: id,
+              ageMs: age,
+              timestamp: ts,
+              expired: !isFresh
+            };
+          }
+        }
+      } catch (_) {}
+    }
+  }
+
+  return { valid: false, reason: 'invalid_or_expired', bookId: null, expired: true };
+}
+
+function decodeBookId(token) {
+  const result = validateToken(token);
+  return result.valid ? result.bookId : null;
+}
+
+function hasValidApiKey(request, env, url) {
+  const configuredKey = env.API_KEY || env.COUNT_ADMIN_KEY;
+  if (!configuredKey) return false;
+  const headerKey = request.headers.get('x-api-key') || request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+  const queryKey = url.searchParams.get('api_key') || url.searchParams.get('key');
+  return headerKey === configuredKey || queryKey === configuredKey;
+}
+
+function extractBookKey(url, booksData) {
+  const rawToken = url.searchParams.get('book') || url.searchParams.get('id') || url.searchParams.get('v');
+  if (rawToken) {
+    const validation = validateToken(rawToken);
+    if (validation.bookId && booksData && booksData[validation.bookId]) {
+      return validation.bookId;
+    }
+    if (booksData && booksData[rawToken]) {
+      return rawToken;
+    }
+    return null;
+  }
+  const cleanPath = url.pathname
+    .replace(/^\/book\//, '')
+    .replace(/^\//, '')
+    .replace(/\/$/, '')
+    .replace(/\.html$/, '');
+
+  if (cleanPath && cleanPath !== 'book') {
+    const validation = validateToken(cleanPath);
+    if (validation.bookId && booksData && booksData[validation.bookId]) {
+      return validation.bookId;
+    }
+    if (booksData && booksData[cleanPath]) {
+      return cleanPath;
+    }
+    return null;
+  }
+  return null;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // Preflight CORS handler for external website requests
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'access-control-allow-origin': '*',
+          'access-control-allow-methods': 'GET, POST, OPTIONS',
+          'access-control-allow-headers': 'Content-Type, Authorization, x-api-key',
+          'access-control-max-age': '86400'
+        }
+      });
+    }
+
     if (request.method === 'GET' && (url.pathname === '/count' || url.pathname === '/count/')) {
       const countPageUrl = new URL('/count/index.html', url.origin);
       return env.ASSETS.fetch(new Request(countPageUrl, request));
+    }
+
+
+
+    // Endpoint to show all available data_book attributes ONLY (pure array)
+    if (url.pathname === '/api/data-books' || url.pathname === '/api/data-books/' || url.pathname === '/api/data-book' || url.pathname === '/api/tags') {
+      if (!hasValidApiKey(request, env, url)) {
+        return json({ error: 'Unauthorized: Invalid or missing API key. Pass x-api-key header or ?key= parameter.' }, { status: 401 });
+      }
+
+      const booksData = await getBooksData(env, url.origin);
+      const dataBooksOnly = Object.keys(booksData);
+
+      return json(dataBooksOnly);
+    }
+
+    // Resolve single book URL API
+    if (url.pathname === '/api/books/resolve' || url.pathname === '/api/book-link') {
+      if (!hasValidApiKey(request, env, url)) {
+        return json({ error: 'Unauthorized: Invalid or missing API key.' }, { status: 401 });
+      }
+
+      const booksData = await getBooksData(env, url.origin);
+      let bookId = url.searchParams.get('id') || url.searchParams.get('book');
+      if (request.method === 'POST') {
+        try {
+          const body = await request.json();
+          bookId = body.id || body.book || bookId;
+        } catch (_) {}
+      }
+
+      if (!bookId) {
+        return json({ error: 'Missing book id parameter. Pass ?id=book-id or POST { id: "book-id" }' }, { status: 400 });
+      }
+
+      const decodedKey = decodeBookId(bookId);
+      const resolvedKey = booksData[bookId] ? bookId : (booksData[decodedKey] ? decodedKey : null);
+      if (!resolvedKey) {
+        return json({ error: 'Book not found.', id: bookId }, { status: 404 });
+      }
+
+      const token = encodeBookId(resolvedKey);
+      const book = booksData[resolvedKey];
+      return json({
+        success: true,
+        id: resolvedKey,
+        title: book.title,
+        category: book.category || 'IELTS',
+        image: book.image,
+        token,
+        url: `${url.origin}/book/?book=${token}`
+      });
+    }
+
+    // Embed Script route for external websites
+    if (url.pathname === '/api/embed.js') {
+      const embedScriptUrl = new URL('/assets/js/embed.js', url.origin);
+      return env.ASSETS.fetch(new Request(embedScriptUrl, request));
     }
 
     if (url.pathname === '/api/claim-clicks/countries') {
@@ -234,6 +438,83 @@ export default {
       } catch (error) {
         console.error('Claim click API failed:', error);
         return json({ error: 'Unable to update the click count.' }, { status: 500 });
+      }
+    }
+
+    // Static assets & specific known routes
+    if (
+      url.pathname.startsWith('/assets/') ||
+      url.pathname.startsWith('/data/') ||
+      url.pathname === '/sw.js' ||
+      url.pathname === '/robots.txt' ||
+      url.pathname === '/manifest.webmanifest' ||
+      /\.(css|js|json|png|jpg|jpeg|svg|webp|ico|woff2|map)$/i.test(url.pathname)
+    ) {
+      return env.ASSETS.fetch(request);
+    }
+
+    if (url.pathname === '/list' || url.pathname === '/list/' || url.pathname === '/list/index.html') {
+      return env.ASSETS.fetch(request);
+    }
+
+    if (url.pathname === '/data-book' || url.pathname === '/data-book/' || url.pathname === '/data-book.html') {
+      const dataBookPageUrl = new URL('/data-book.html', url.origin);
+      return env.ASSETS.fetch(new Request(dataBookPageUrl, request));
+    }
+
+    if (url.pathname === '/404' || url.pathname === '/404.html') {
+      return env.ASSETS.fetch(request);
+    }
+
+    // Main index page (without ?book= parameter)
+    if ((url.pathname === '/' || url.pathname === '/index.html') && !url.searchParams.has('book')) {
+      return env.ASSETS.fetch(request);
+    }
+
+    // Dynamic Book Pages (e.g. /cambridge-ielts, /book/:slug, /:slug, or ?book=:slug)
+    const booksData = await getBooksData(env, url.origin);
+    const rawSlug = url.pathname.replace(/^\/book\//, '').replace(/^\//, '').replace(/\/$/, '');
+    const isDynamicBookRoute =
+      url.pathname.startsWith('/book') ||
+      url.searchParams.has('book') ||
+      url.searchParams.has('id') ||
+      url.searchParams.has('v') ||
+      Boolean(booksData && booksData[rawSlug]);
+
+    if (isDynamicBookRoute) {
+      const bookKey = extractBookKey(url, booksData);
+      const bookHtmlRes = await env.ASSETS.fetch(new Request(new URL('/book.html', url.origin), request));
+
+      if (bookHtmlRes.ok) {
+        if (bookKey && booksData && booksData[bookKey]) {
+          const book = booksData[bookKey];
+          let html = await bookHtmlRes.text();
+          const title = book.title ? `${book.title}` : 'Book Details';
+          const desc = book.description || 'Open a PDF redirect page with full book details.';
+          const img = book.image || '/assets/images/placeholder.svg';
+          const canonicalUrl = url.href;
+
+          html = html
+            .replace(/<title id="pageTitle">.*?<\/title>/, `<title id="pageTitle">${escapeHtml(title)}</title>`)
+            .replace(/<meta name="description" id="metaDescription" content=".*?" \/>/, `<meta name="description" id="metaDescription" content="${escapeHtml(desc)}" />`)
+            .replace(/<link rel="canonical" id="canonicalLink" href=".*?" \/>/, `<link rel="canonical" id="canonicalLink" href="${escapeHtml(canonicalUrl)}" />`)
+            .replace(/<meta property="og:title" id="ogTitle" content=".*?" \/>/, `<meta property="og:title" id="ogTitle" content="${escapeHtml(title)}" />`)
+            .replace(/<meta property="og:description" id="ogDescription" content=".*?" \/>/, `<meta property="og:description" id="ogDescription" content="${escapeHtml(desc)}" />`)
+            .replace(/<meta property="og:url" id="ogUrl" content=".*?" \/>/, `<meta property="og:url" id="ogUrl" content="${escapeHtml(canonicalUrl)}" />`)
+            .replace(/<meta property="og:image" id="ogImage" content=".*?" \/>/, `<meta property="og:image" id="ogImage" content="${escapeHtml(img)}" />`)
+            .replace(/<meta name="twitter:title" id="twitterTitle" content=".*?" \/>/, `<meta name="twitter:title" id="twitterTitle" content="${escapeHtml(title)}" />`)
+            .replace(/<meta name="twitter:description" id="twitterDescription" content=".*?" \/>/, `<meta name="twitter:description" id="twitterDescription" content="${escapeHtml(desc)}" />`);
+
+          return new Response(html, {
+            headers: {
+              'content-type': 'text/html; charset=utf-8',
+              'cache-control': 'no-store, no-cache, must-revalidate, max-age=0',
+              'pragma': 'no-cache',
+              'expires': '0'
+            }
+          });
+        }
+        return bookHtmlRes;
       }
     }
 

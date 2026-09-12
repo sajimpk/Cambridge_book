@@ -4,7 +4,8 @@
 	"main": "worker.js",
 	"compatibility_date": "2026-08-26",
 	"vars": {
-		"COUNT_ADMIN_KEY": "sajimpk"
+		"COUNT_ADMIN_KEY": "sajimpk",
+		"API_KEY": "sajimpk"
 	},
 	"assets": {
 		"directory": ".",

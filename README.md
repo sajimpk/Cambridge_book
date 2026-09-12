@@ -1,4 +1,4 @@
-# Arif Academy Book Library
+# Book Library
 
 A searchable PDF-book directory built with HTML, CSS, vanilla JavaScript, Cloudflare Workers, Static Assets, and D1.
 
@@ -25,7 +25,7 @@ The site uses one shared dynamic book page for all books. It also records offer-
 .
 |-- index.html                   # Main searchable book page
 |-- book.html                    # Source template for the book details page
-|-- cambridge-ielts/index.html   # Generated shared book details page
+|-- book/index.html              # Generated shared book details page
 |-- count/index.html             # Day-wise click report
 |-- 404.html                     # Not-found page
 |-- data/book.json               # Source of truth for book information
@@ -57,10 +57,10 @@ All books are stored in `data/book.json`. The object key becomes the book identi
 }
 ```
 
-The corresponding details URL is:
+The corresponding details URL uses an obfuscated, unique token:
 
 ```text
-/cambridge-ielts/?book=cambridge-ielts-01
+/book/?book=<encoded_token>
 ```
 
 The frontend reads the key from the `book` query parameter, finds the matching entry in `data/book.json`, and assigns its `download` value to the download buttons.
@@ -92,7 +92,7 @@ No count is displayed inside the claim button.
 Open:
 
 ```text
-https://books.arifacademybooks.workers.dev/count
+https://books.<your-subdomain>.workers.dev/count
 ```
 
 The report shows:
@@ -191,7 +191,7 @@ Wrangler will output the configuration details for your database, including its 
 
 ### 2. Configure bindings in wrangler.jsonc
 
-Open [wrangler.jsonc](file:///c:/Users/Arif%20Academy%20ICT/Desktop/Project/DYNAMIC%20LINK/wrangler.jsonc) and update the `d1_databases` array with your database information:
+Open `wrangler.jsonc` and update the `d1_databases` array with your database information:
 
 ```json
   "d1_databases": [
@@ -205,7 +205,7 @@ Open [wrangler.jsonc](file:///c:/Users/Arif%20Academy%20ICT/Desktop/Project/DYNA
 
 ### 3. Initialize the schema
 
-Apply the database schema from [schema.sql](file:///c:/Users/Arif%20Academy%20ICT/Desktop/Project/DYNAMIC%20LINK/schema.sql) to initialize the tables:
+Apply the database schema from `schema.sql` to initialize the tables:
 
 #### For local development:
 
@@ -280,16 +280,16 @@ The deployment also installs the weekly Sunday-night Cron Trigger from `wrangler
 After deployment, verify:
 
 ```text
-https://books.arifacademybooks.workers.dev/
-https://books.arifacademybooks.workers.dev/api/claim-clicks
-https://books.arifacademybooks.workers.dev/count
+https://books.<your-subdomain>.workers.dev/
+https://books.<your-subdomain>.workers.dev/api/claim-clicks
+https://books.<your-subdomain>.workers.dev/count
 ```
 
 If a browser still shows an older cached page, use a hard refresh (`Ctrl + Shift + R`). API requests bypass the service-worker cache.
 
 ## Regenerate the shared book page
 
-When `book.html` changes, regenerate `cambridge-ielts/index.html` with:
+When `book.html` changes, regenerate `book/index.html` with:
 
 ```powershell
 node generate.js
@@ -297,9 +297,103 @@ node generate.js
 
 Review the generated changes before deployment.
 
+## External Website API & Instant 1.5s Expiry Token Engine
+
+You can easily connect other websites (WordPress, Blogger, React, Vue, PHP, or HTML) to this system. Every link request generates a brand new cryptographic token that strictly expires in **1.5 seconds (1500 ms)**. If any expired or reused link is visited, the server immediately returns **404**.
+
+### 1. API Endpoints
+
+All API endpoints support CORS and require authentication using the API key via `x-api-key` header or `?key=` query parameter.
+
+#### Available Endpoints
+
+#### A. Get all `data_book` attributes ONLY
+```http
+GET /api/data-books?key=sajimpk
+```
+**Response:**
+```json
+[
+  "cambridge-ielts-01",
+  "cambridge-ielts-02",
+  "cambridge-ielts-03",
+  "cambridge-ielts-04",
+  "cambridge-ielts-05",
+  "cambridge-ielts-06",
+  "cambridge-ielts-07",
+  "cambridge-ielts-08",
+  "cambridge-ielts-09",
+  "cambridge-ielts-10",
+  "mindset-for-ielts-1-students-book",
+  "the-official-cambridge-guide-to-ielts"
+]
+```
+
+#### B. Resolve single live book link (1.5s validity)
+```http
+GET /api/books/resolve?id=cambridge-ielts-01&key=sajimpk
+```
+
+> **🌐 Visual Directory:** You can also open `/data-book` in your browser (`http://127.0.0.1:8000/data-book`) to view a searchable visual table and copy any `data-book` tag with 1 click!
+
+### 2. Instant Auto-Linker Script (Zero-Config Domain Support)
+
+The embed script **automatically detects its own domain** from the `src` attribute. When you change your domain in the future, you simply update the `src` URL — no extra configuration or `data-api-url` required!
+
+Place this script tag on your external website (e.g., in header or before `</body>`):
+
+```html
+<!-- Simple setup: Automatically detects domain from src -->
+<script src="https://your-domain.com/assets/js/embed.js" data-api-key="sajimpk" defer></script>
+```
+
+> **💡 Domain Change Flexibility**:
+> - If your domain is `https://books.example.workers.dev`, use `src="https://books.example.workers.dev/assets/js/embed.js"`.
+> - If you change your domain to `https://mycustomlibrary.com`, simply change to `src="https://mycustomlibrary.com/assets/js/embed.js"`.
+> - The script automatically routes all book clicks to the new domain!
+> - *(Optional)* You can also explicitly pass `data-api-url="https://your-domain.com"` if you ever want to override it.
+
+Then in your external website content, simply write HTML links with `data-book="<book-id>"`:
+
+```html
+<!-- The script automatically generates a fresh 1.5s token at the moment of click/interaction -->
+<a data-book="cambridge-ielts-01">Download Cambridge IELTS 1</a>
+<a data-book="cambridge-ielts-16">Download Cambridge IELTS 16</a>
+```
+
+### 3. Strict 1.5-Second Expiration & 404 Protection
+
+- **Per-Click Instant Hash**: Every click generates a fresh token with millisecond precision timestamp.
+- **Immediate Navigation (0–300ms)**: The browser opens the link immediately.
+- **Copy/Reuse Protection (> 1.5s)**: If anyone attempts to copy the URL, share it, or revisit it after 1.5 seconds, the token fails cryptographic validation and immediately returns **404 Not Found**.
+
+### 4. Static Demo Site
+
+A full interactive demonstration is included in `demo-site/index.html`:
+- Open `http://127.0.0.1:8000/demo-site/` or deploy `demo-site/` to any static hosting provider.
+- Includes a live test button **"Test Expired Link (>1.5s) ➔ 404"** to verify the expiration behavior.
+
+### 4. Fetch from External Backend (Node.js / PHP / Python)
+
+**JavaScript / Node.js:**
+```javascript
+const response = await fetch('https://books.<your-subdomain>.workers.dev/api/books', {
+  headers: { 'x-api-key': 'sajimpk' }
+});
+const data = await response.json();
+console.log(data.books['cambridge-ielts-01'].url);
+```
+
+**PHP (WordPress):**
+```php
+$response = wp_remote_get('https://books.<your-subdomain>.workers.dev/api/books?key=sajimpk');
+$data = json_decode(wp_remote_retrieve_body($response), true);
+$cambridge1_url = $data['books']['cambridge-ielts-01']['url'];
+```
+
 ## Security notes
 
-- Never expose `COUNT_ADMIN_KEY` in client-side code.
+- Keep `COUNT_ADMIN_KEY` and `API_KEY` secure.
 - D1 database IDs are configuration identifiers, not passwords; account credentials and API tokens must still remain private.
 - The `/count` page is marked `noindex`, but anyone who knows the URL can view aggregate counts.
 - Only the delete operation is protected by the admin secret.
