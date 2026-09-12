@@ -21,11 +21,16 @@
     } catch (_) {}
   }
 
-  // Automatic origin resolution order:
-  // 1. Explicit data-api-url (if provided)
-  // 2. Window global window.BOOK_API_URL (if set)
-  // 3. Script's own host domain (automatically extracted from src="https://your-domain.com/...")
-  // 4. Current website origin (fallback)
+  // Origin resolution:
+  // By default, book reader URL resolves to the current website (window.location.origin -> e.g. https://example.com/book/)
+  // It stays 100% on example.com and does NOT redirect to worker domain
+  const siteUrl =
+    (currentScript && (currentScript.dataset.siteUrl || currentScript.dataset.bookBaseUrl || currentScript.dataset.bookUrl)) ||
+    window.BOOK_SITE_URL ||
+    window.BOOK_BASE_URL ||
+    window.location.origin;
+
+  // apiUrl is the API service endpoint (e.g. worker domain)
   const apiUrl =
     (currentScript && currentScript.dataset.apiUrl) ||
     window.BOOK_API_URL ||
@@ -59,7 +64,8 @@
 
   function getInstantBookUrl(id) {
     const token = generateInstantToken(id);
-    return `${apiUrl.replace(/\/$/, '')}/book/?book=${token}`;
+    const base = siteUrl ? siteUrl.replace(/\/$/, '') : '';
+    return `${base}/book/?book=${token}`;
   }
 
   function bindBookLinks() {

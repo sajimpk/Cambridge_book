@@ -14,15 +14,18 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" id="twitterTitle" content="Book Details" />
   <meta name="twitter:description" id="twitterDescription" content="Open a PDF redirect page with full book details." />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="theme-color" content="#0f172a" />
-  <link rel="manifest" href="../manifest.webmanifest" />
-  <link rel="stylesheet" href="../assets/css/styles.css" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="/assets/css/styles.css" />
 </head>
 <body class="page-shell" data-theme="light">
   <div class="page-shell__layout">
     <main class="container">
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a href="../Index.html">Home</a>
+        <a href="/">Home</a>
         <span aria-hidden="true">/</span>
         <span id="breadcrumbBook">Book</span>
       </nav>
@@ -54,7 +57,7 @@
             </ul>
             <div class="services-sidebar-footer">
               <p><span aria-hidden="true"></span> Worldwide student support</p>
-              <a href="https://wa.me/8801711777508?text=Hello%20Arif%20Academy%2C%20I%20want%20to%20know%20more%20about%20your%20IELTS%20services." target="_blank" rel="noopener noreferrer">Explore services <span aria-hidden="true">→</span></a>
+              <a href="https://wa.me/8801711777508?text=Hello%2C%20I%20want%20to%20know%20more%20about%20your%20IELTS%20services." target="_blank" rel="noopener noreferrer">Explore services <span aria-hidden="true">→</span></a>
             </div>
           </section>
         </div>
@@ -63,10 +66,10 @@
         <article class="book-card" id="bookDetail" aria-busy="true">
           <div class="book-hero">
             <div class="book-cover-frame">
-              <span class="book-cover-frame__label" aria-hidden="true">Arif Academy Library</span>
+              <span class="book-cover-frame__label" aria-hidden="true">Book Library</span>
               <span class="book-cover-frame__orb book-cover-frame__orb--one" aria-hidden="true"></span>
               <span class="book-cover-frame__orb book-cover-frame__orb--two" aria-hidden="true"></span>
-              <img id="bookImage" class="book-cover" src="../assets/images/placeholder.svg" alt="Book cover" loading="lazy" />
+              <div id="bookCoverSlot" style="width: 100%; display: flex; justify-content: center; z-index: 2;"></div>
             </div>
             <div class="book-meta">
               <div class="book-meta-topline">
@@ -77,7 +80,7 @@
                 </span>
               </div>
               <h1 class="book-content-title" id="bookTitle">Loading book...</h1>
-              <p id="bookTagline" class="sr-only">Arif Academy PDF redirect page for every book.</p>
+              <p id="bookTagline" class="sr-only">PDF redirect page for every book.</p>
               <p class="book-description" id="bookDescription">Description will appear here.</p>
               <div class="book-stats">
                 <span class="book-stat-item">
@@ -99,15 +102,15 @@
             <div class="action-row">
               <a id="downloadButton" class="button button-primary" href="#" target="_blank" rel="noopener noreferrer">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 3h8a2 2 0 0 1 2 2v16l-6-3-6 3V5a2 2 0 0 1 2-2Z"/></svg>
-                Preview PDF
+                Read Online
               </a>
-              <a id="directDownloadButton" class="button button-download" href="#" download target="_blank" rel="noopener noreferrer">
-                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14"/></svg>
-                Download PDF
+              <a id="directDownloadButton" class="button button-download" href="#" target="_blank" rel="noopener noreferrer">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                Read Book
               </a>
               <button id="copyLinkButton" class="button button-secondary" type="button">
                 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 15l6-6m-8.5 2.5-2 2a3.5 3.5 0 0 0 5 5l2-2m6-4 2-2a3.5 3.5 0 0 0-5-5l-2 2"/></svg>
-                Copy Link
+                Share Book
               </button>
             </div>
           </section>
@@ -129,7 +132,7 @@
             <li><span>07</span><div><strong>Progress analytics</strong><small>Track improvement over time</small></div></li>
             <li><span>08</span><div><strong>Lifetime global support</strong><small>Help for international learners</small></div></li>
           </ul>
-          <a class="platform-features-card__cta" href="https://wa.me/8801711777508?text=Hello%20Arif%20Academy%2C%20I%20want%20to%20know%20more%20about%20IELTS%20Mock%20Tests." target="_blank" rel="noopener noreferrer">Ask about the platform <span aria-hidden="true">→</span></a>
+          <a class="platform-features-card__cta" href="https://wa.me/8801711777508?text=Hello%2C%20I%20want%20to%20know%20more%20about%20IELTS%20Mock%20Tests." target="_blank" rel="noopener noreferrer">Ask about the platform <span aria-hidden="true">→</span></a>
         </aside>
 
         <!-- Localized international offer -->
@@ -152,7 +155,7 @@
               <li><span aria-hidden="true">✓</span><span data-offer-i18n="binance">Binance payment supported</span></li>
               <li><span aria-hidden="true">✓</span><span data-offer-i18n="worldwide">Worldwide WhatsApp support</span></li>
             </ul>
-            <a class="global-offer__button" href="https://wa.me/8801711777508?text=Hello%20Arif%20Academy%2C%20I%20want%20to%20purchase%20Unlimited%20IELTS%20Mock%20Test." target="_blank" rel="noopener noreferrer">
+            <a class="global-offer__button" href="https://wa.me/8801711777508?text=Hello%2C%20I%20want%20to%20purchase%20Unlimited%20IELTS%20Mock%20Test." target="_blank" rel="noopener noreferrer">
               <span aria-hidden="true">●</span><span data-offer-i18n="cta">Contact on WhatsApp</span>
             </a>
           </section>
@@ -163,11 +166,11 @@
 
 
   <footer class="site-footer">
-    <div class="site-footer__inner"><div><strong>Arif Academy</strong><span>Learn clearly. Grow confidently.</span></div><p>&copy; 2026 Arif Academy</p></div>
+    <div class="site-footer__inner"><div><strong>Book Library</strong><span>Learn clearly. Grow confidently.</span></div><p>&copy; 2026 Book Library</p></div>
   </footer>
 
-  <script type="module" src="../assets/js/book.js"></script>
-  <script src="../assets/js/contact-links.js" defer></script>
-  <script src="../assets/js/claim-counter.js" defer></script>
+  <script type="module" src="/assets/js/book.js"></script>
+  <script src="/assets/js/contact-links.js" defer></script>
+  <script src="/assets/js/claim-counter.js" defer></script>
 </body>
 </html>

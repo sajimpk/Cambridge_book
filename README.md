@@ -4,6 +4,10 @@ A searchable PDF-book directory built with HTML, CSS, vanilla JavaScript, Cloudf
 
 The site uses one shared dynamic book page for all books. It also records offer-button clicks in D1 and provides a day-wise report at `/count`.
 
+## Quick Guides & Documentation
+- 🚀 **[Cloudflare Worker Deployment Guide](./DEPLOY_WORKER_GUIDE.md)**: সম্পূর্ণ ডিপ্লয়মেন্ট স্টেপ ও D1 ডেটাবেজ সেটআপ।
+- ⚡ **[API Setup & Integration Guide](./API_SETUP_GUIDE.md)**: সমস্ত API এন্ডপয়েন্ট, অথেনটিকেশন ও এক্সটার্নাল ওয়েবসাইট ইন্টিগ্রেশন গাইড।
+
 ## Main features
 
 - Instant book search

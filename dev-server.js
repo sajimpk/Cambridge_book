@@ -2,7 +2,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { generatePerRequestToken, validateToken, EXPIRY_MS } from './assets/js/url-helper.js';
+import { generatePerRequestToken, validateToken, decodeBookId, EXPIRY_MS } from './assets/js/url-helper.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -88,29 +88,102 @@ const server = http.createServer((req, res) => {
 
 
 
+function resolveCallerBaseUrl(req, url, body = {}) {
+  const explicit =
+    url.searchParams.get('site_url') ||
+    url.searchParams.get('base_url') ||
+    url.searchParams.get('site') ||
+    url.searchParams.get('domain') ||
+    url.searchParams.get('origin') ||
+    url.searchParams.get('target_origin') ||
+    body?.site_url ||
+    body?.base_url ||
+    body?.site ||
+    body?.domain ||
+    body?.origin ||
+    body?.target_origin ||
+    req.headers['x-site-url'] ||
+    req.headers['x-origin'] ||
+    req.headers['x-target-origin'];
+
+  if (explicit) {
+    let formatted = String(explicit).trim();
+    if (!/^https?:\/\//i.test(formatted)) {
+      formatted = `https://${formatted}`;
+    }
+    try {
+      return new URL(formatted).origin;
+    } catch (_) {
+      return formatted.replace(/\/+$/, '');
+    }
+  }
+
+  const originHeader = req.headers['origin'];
+  if (originHeader && originHeader !== 'null' && originHeader !== '') {
+    return originHeader.replace(/\/+$/, '');
+  }
+
+  const refererHeader = req.headers['referer'];
+  if (refererHeader) {
+    try {
+      const refUrl = new URL(refererHeader);
+      if (refUrl.origin && refUrl.origin !== 'null') {
+        return refUrl.origin.replace(/\/+$/, '');
+      }
+    } catch (_) {}
+  }
+
+  return `http://${req.headers.host || `127.0.0.1:${PORT}`}`.replace(/\/+$/, '');
+}
+
   // API Endpoint: /api/books/resolve
   if (url.pathname === '/api/books/resolve' || url.pathname === '/api/book-link') {
     if (!checkApiKey(req, url)) {
       return sendJson(res, 401, { error: 'Unauthorized: Invalid or missing API key.' });
     }
     const booksData = getBooksData();
-    const bookId = url.searchParams.get('id') || url.searchParams.get('book');
-    if (!bookId) {
-      return sendJson(res, 400, { error: 'Missing book id. Pass ?id=book-id' });
+    let bookId = url.searchParams.get('id') || url.searchParams.get('book');
+    const baseUrl = resolveCallerBaseUrl(req, url);
+
+    const handleResolve = (targetId, postData = {}) => {
+      if (!targetId) {
+        return sendJson(res, 400, { error: 'Missing book id. Pass ?id=book-id' });
+      }
+      const decodedKey = decodeBookId(targetId);
+      const resolvedKey = booksData[targetId] ? targetId : (booksData[decodedKey] ? decodedKey : null);
+      if (!resolvedKey) {
+        return sendJson(res, 404, { error: 'Book not found' });
+      }
+      const token = generatePerRequestToken(resolvedKey);
+      const book = booksData[resolvedKey];
+      const finalBaseUrl = resolveCallerBaseUrl(req, url, postData);
+      return sendJson(res, 200, {
+        success: true,
+        id: resolvedKey,
+        title: book.title,
+        category: book.category || 'IELTS',
+        token,
+        url: `${finalBaseUrl}/book/?book=${token}`,
+        path: `/book/?book=${token}`,
+        relative_url: `/book/?book=${token}`
+      });
+    };
+
+    if (req.method === 'POST') {
+      let bodyData = '';
+      req.on('data', chunk => { bodyData += chunk; });
+      req.on('end', () => {
+        try {
+          const parsed = JSON.parse(bodyData || '{}');
+          handleResolve(parsed.id || parsed.book || bookId, parsed);
+        } catch (_) {
+          handleResolve(bookId);
+        }
+      });
+      return;
     }
-    const token = generatePerRequestToken(bookId);
-    const book = booksData[bookId];
-    if (!book) {
-      return sendJson(res, 404, { error: 'Book not found' });
-    }
-    return sendJson(res, 200, {
-      success: true,
-      id: bookId,
-      title: book.title,
-      category: book.category || 'IELTS',
-      token,
-      url: `${origin}/book/?book=${token}`
-    });
+
+    return handleResolve(bookId);
   }
 
   // Route /data-book -> data-book.html

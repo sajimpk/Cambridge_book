@@ -268,6 +268,54 @@ function extractBookKey(url, booksData) {
   return null;
 }
 
+function resolveCallerBaseUrl(request, url, body = {}) {
+  const explicit =
+    url.searchParams.get('site_url') ||
+    url.searchParams.get('base_url') ||
+    url.searchParams.get('site') ||
+    url.searchParams.get('domain') ||
+    url.searchParams.get('origin') ||
+    url.searchParams.get('target_origin') ||
+    body?.site_url ||
+    body?.base_url ||
+    body?.site ||
+    body?.domain ||
+    body?.origin ||
+    body?.target_origin ||
+    request.headers.get('x-site-url') ||
+    request.headers.get('x-origin') ||
+    request.headers.get('x-target-origin');
+
+  if (explicit) {
+    let formatted = String(explicit).trim();
+    if (!/^https?:\/\//i.test(formatted)) {
+      formatted = `https://${formatted}`;
+    }
+    try {
+      return new URL(formatted).origin;
+    } catch (_) {
+      return formatted.replace(/\/+$/, '');
+    }
+  }
+
+  const originHeader = request.headers.get('origin');
+  if (originHeader && originHeader !== 'null' && originHeader !== '') {
+    return originHeader.replace(/\/+$/, '');
+  }
+
+  const refererHeader = request.headers.get('referer');
+  if (refererHeader) {
+    try {
+      const refUrl = new URL(refererHeader);
+      if (refUrl.origin && refUrl.origin !== 'null') {
+        return refUrl.origin.replace(/\/+$/, '');
+      }
+    } catch (_) {}
+  }
+
+  return url.origin.replace(/\/+$/, '');
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -310,11 +358,12 @@ export default {
       }
 
       const booksData = await getBooksData(env, url.origin);
+      let postBody = {};
       let bookId = url.searchParams.get('id') || url.searchParams.get('book');
       if (request.method === 'POST') {
         try {
-          const body = await request.json();
-          bookId = body.id || body.book || bookId;
+          postBody = await request.json();
+          bookId = postBody.id || postBody.book || bookId;
         } catch (_) {}
       }
 
@@ -328,6 +377,7 @@ export default {
         return json({ error: 'Book not found.', id: bookId }, { status: 404 });
       }
 
+      const baseUrl = resolveCallerBaseUrl(request, url, postBody);
       const token = encodeBookId(resolvedKey);
       const book = booksData[resolvedKey];
       return json({
@@ -337,7 +387,9 @@ export default {
         category: book.category || 'IELTS',
         image: book.image,
         token,
-        url: `${url.origin}/book/?book=${token}`
+        url: `${baseUrl}/book/?book=${token}`,
+        path: `/book/?book=${token}`,
+        relative_url: `/book/?book=${token}`
       });
     }
 
