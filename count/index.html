@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>Claim Click Report</title>
   <meta name="theme-color" content="#0f172a" />
-  <link rel="stylesheet" href="../assets/css/styles.css" />
+  <link rel="stylesheet" href="/assets/css/styles.css" />
 </head>
 <body class="page-shell count-page" data-theme="light">
   <main class="count-dashboard container">
@@ -28,6 +28,41 @@
         <span>Today</span>
         <strong id="todayClicks">—</strong>
       </article>
+    </section>
+
+    <!-- Site Settings Card: Promotional Banners & WhatsApp -->
+    <section class="count-table-card admin-dashboard-settings" id="siteSettingsSection" aria-label="Site settings">
+      <div class="count-table-heading">
+        <div>
+          <h2>Promotional Banners & WhatsApp Settings</h2>
+          <p>Control banner publishing across all pages and update the global claim WhatsApp number.</p>
+        </div>
+        <span class="site-admin-badge" id="dashBannersBadge">Checking...</span>
+      </div>
+
+      <div class="admin-dash-settings-grid">
+        <!-- Banners Toggle Block -->
+        <div class="admin-dash-setting-item">
+          <div>
+            <h3>Promotional Banners Status</h3>
+            <p>Our Services, Computer-Based IELTS Features, Global Offer & 404 Deal.</p>
+          </div>
+          <button type="button" class="button button-secondary" id="dashToggleBannersBtn">Toggle Banners</button>
+        </div>
+
+        <!-- WhatsApp Number Block -->
+        <div class="admin-dash-setting-item">
+          <div>
+            <h3>Claim WhatsApp Number</h3>
+            <p>Updates WhatsApp link on all deal, mock test, and claim buttons.</p>
+          </div>
+          <div class="admin-dash-input-group">
+            <input type="text" id="dashWhatsappInput" placeholder="e.g. 8801711777508" />
+            <button type="button" class="button button-primary" id="dashSaveWhatsappBtn">Save Number</button>
+          </div>
+        </div>
+      </div>
+      <div id="dashSettingsAlert" class="site-admin-alert" style="display: none; margin-top: 1rem;"></div>
     </section>
 
     <section class="count-table-card">
@@ -71,6 +106,7 @@
     </nav>
   </dialog>
 
-  <script src="../assets/js/count.js" defer></script>
+  <script src="/assets/js/contact-links.js" defer></script>
+  <script src="/assets/js/count.js" defer></script>
 </body>
 </html>

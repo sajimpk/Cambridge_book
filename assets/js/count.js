@@ -56,7 +56,10 @@
   async function loadReport() {
     try {
       const response = await fetch('/api/claim-clicks?days=365', { cache: 'no-store' });
-      if (!response.ok) throw new Error('Report request failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: Failed to load click report`);
+      }
 
       const data = await response.json();
       const daily = Array.isArray(data.daily) ? data.daily : [];
@@ -80,7 +83,7 @@
       `).join('');
     } catch (error) {
       console.error(error);
-      statusElement.textContent = 'Unable to load the click report. Please refresh.';
+      statusElement.textContent = `Unable to load report: ${error.message || 'Please refresh.'}`;
       tableBody.innerHTML = '<tr><td colspan="2" class="count-empty">Report unavailable.</td></tr>';
     }
   }
@@ -232,6 +235,101 @@
   countryDialog.addEventListener('click', (event) => {
     if (event.target === countryDialog) countryDialog.close();
   });
+  // Site Settings UI Controller (Promotional Banners & WhatsApp)
+  const dashBannersBadge = document.getElementById('dashBannersBadge');
+  const dashToggleBannersBtn = document.getElementById('dashToggleBannersBtn');
+  const dashWhatsappInput = document.getElementById('dashWhatsappInput');
+  const dashSaveWhatsappBtn = document.getElementById('dashSaveWhatsappBtn');
+  const dashAlert = document.getElementById('dashSettingsAlert');
+
+  function showDashAlert(msg, isError = false) {
+    if (!dashAlert) return;
+    dashAlert.textContent = msg;
+    dashAlert.className = 'site-admin-alert ' + (isError ? 'error' : 'success');
+    dashAlert.style.display = 'block';
+    setTimeout(() => { dashAlert.style.display = 'none'; }, 4000);
+  }
+
+  function getAdminKey() {
+    let key = reportAdminKey || sessionStorage.getItem('site_admin_key');
+    if (!key) {
+      key = window.prompt('Enter the Admin Key:') || '';
+      if (key) {
+        reportAdminKey = key;
+        sessionStorage.setItem('site_admin_key', key);
+      }
+    }
+    return key;
+  }
+
+  function renderDashboardSettings() {
+    if (!dashBannersBadge || !window.SiteSettings) return;
+    const settings = window.SiteSettings.getSettings();
+    const isPub = settings.bannersPublished !== false;
+
+    dashBannersBadge.className = 'site-admin-badge ' + (isPub ? 'active' : 'inactive');
+    dashBannersBadge.textContent = isPub ? '● Banners: Published' : '○ Banners: Removed';
+    dashToggleBannersBtn.textContent = isPub ? '🚫 Remove Banners' : '✅ Publish Banners';
+    dashToggleBannersBtn.className = isPub ? 'button button-secondary' : 'button button-primary';
+
+    if (dashWhatsappInput && !dashWhatsappInput.matches(':focus')) {
+      dashWhatsappInput.value = settings.whatsappNumber || '8801711777508';
+    }
+  }
+
+  if (dashToggleBannersBtn) {
+    dashToggleBannersBtn.addEventListener('click', async () => {
+      const key = getAdminKey();
+      if (!key) return;
+
+      const current = window.SiteSettings.getSettings();
+      const nextState = current.bannersPublished === false;
+      dashToggleBannersBtn.disabled = true;
+      dashToggleBannersBtn.textContent = 'Updating...';
+
+      const res = await window.SiteSettings.saveSettings({ bannersPublished: nextState }, key);
+      dashToggleBannersBtn.disabled = false;
+
+      if (res.success) {
+        renderDashboardSettings();
+        showDashAlert(nextState ? 'Promotional banners PUBLISHED successfully across all pages!' : 'Promotional banners REMOVED successfully across all pages!');
+      } else {
+        renderDashboardSettings();
+        showDashAlert(res.error || 'Failed to update banners status.', true);
+      }
+    });
+  }
+
+  if (dashSaveWhatsappBtn) {
+    dashSaveWhatsappBtn.addEventListener('click', async () => {
+      const key = getAdminKey();
+      if (!key) return;
+
+      const num = dashWhatsappInput.value.trim().replace(/\D/g, '');
+      if (!num || num.length < 8) {
+        showDashAlert('Please enter a valid WhatsApp phone number with country code.', true);
+        return;
+      }
+
+      dashSaveWhatsappBtn.disabled = true;
+      dashSaveWhatsappBtn.textContent = 'Saving...';
+
+      const res = await window.SiteSettings.saveSettings({ whatsappNumber: num }, key);
+      dashSaveWhatsappBtn.disabled = false;
+      dashSaveWhatsappBtn.textContent = 'Save Number';
+
+      if (res.success) {
+        renderDashboardSettings();
+        showDashAlert(`WhatsApp number successfully updated to ${num} across all pages!`);
+      } else {
+        showDashAlert(res.error || 'Failed to update WhatsApp number.', true);
+      }
+    });
+  }
+
+  window.addEventListener('site-settings-changed', renderDashboardSettings);
+  setTimeout(renderDashboardSettings, 200);
+
   deleteButton.addEventListener('click', deleteOldClicks);
   loadReport();
 })();

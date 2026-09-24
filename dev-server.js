@@ -31,6 +31,105 @@ function getBooksData() {
   }
 }
 
+const CLICKS_FILE = path.join(__dirname, 'data', 'clicks.json');
+const REPORT_TIME_ZONE = 'Asia/Dhaka';
+
+function getReportDate(offsetDays = 0) {
+  const dateParts = new Intl.DateTimeFormat('en', {
+    timeZone: REPORT_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date());
+  const getPart = (type) => Number(dateParts.find((part) => part.type === type)?.value);
+  const date = new Date(Date.UTC(getPart('year'), getPart('month') - 1, getPart('day')));
+  date.setUTCDate(date.getUTCDate() + offsetDays);
+  return date.toISOString().slice(0, 10);
+}
+
+function getClicksData() {
+  try {
+    if (fs.existsSync(CLICKS_FILE)) {
+      return JSON.parse(fs.readFileSync(CLICKS_FILE, 'utf8'));
+    }
+  } catch (err) {
+    console.error('Error reading clicks.json:', err);
+  }
+  return { total_clicks: 0, daily: {}, countries: {} };
+}
+
+function saveClicksData(data) {
+  try {
+    const dataDir = path.join(__dirname, 'data');
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+    fs.writeFileSync(CLICKS_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Error writing clicks.json:', err);
+  }
+}
+
+const SETTINGS_FILE = path.join(__dirname, 'data', 'settings.json');
+const BANNERS_FILE = path.join(__dirname, 'data', 'banners.json');
+
+function getSettingsData() {
+  try {
+    if (fs.existsSync(SETTINGS_FILE)) {
+      return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
+    }
+  } catch (err) {
+    console.error('Error reading settings.json:', err);
+  }
+  return { bannersPublished: false, whatsappNumber: '8801762050353' };
+}
+
+function saveSettingsData(data) {
+  try {
+    const dataDir = path.join(__dirname, 'data');
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(data, null, 2), 'utf8');
+
+    const apiDir = path.join(__dirname, 'api');
+    if (!fs.existsSync(apiDir)) fs.mkdirSync(apiDir, { recursive: true });
+    fs.writeFileSync(path.join(apiDir, 'settings'), JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Error writing settings.json:', err);
+  }
+}
+
+function getBannersData() {
+  try {
+    if (fs.existsSync(BANNERS_FILE)) {
+      return JSON.parse(fs.readFileSync(BANNERS_FILE, 'utf8'));
+    }
+  } catch (err) {
+    console.error('Error reading banners.json:', err);
+  }
+  return {
+    bannersPublished: false,
+    whatsappNumber: '8801762050353'
+  };
+}
+
+function saveBannersData(data) {
+  try {
+    const dataDir = path.join(__dirname, 'data');
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+    fs.writeFileSync(BANNERS_FILE, JSON.stringify(data, null, 2), 'utf8');
+
+    const apiDir = path.join(__dirname, 'api');
+    if (!fs.existsSync(apiDir)) fs.mkdirSync(apiDir, { recursive: true });
+    fs.writeFileSync(path.join(apiDir, 'banners'), JSON.stringify(data, null, 2), 'utf8');
+
+    saveSettingsData({
+      bannersPublished: data.bannersPublished ?? false,
+      whatsappNumber: data.whatsappNumber || '8801762050353'
+    });
+  } catch (err) {
+    console.error('Error writing banners.json:', err);
+  }
+}
+
+
 const NO_CACHE_HEADERS = {
   'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
   'Pragma': 'no-cache',
@@ -42,8 +141,8 @@ function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, x-admin-key',
     ...NO_CACHE_HEADERS
   });
   res.end(JSON.stringify(data));
@@ -64,8 +163,8 @@ const server = http.createServer((req, res) => {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
+      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, x-admin-key',
       'Access-Control-Max-Age': '86400'
     });
     return res.end();
@@ -84,6 +183,59 @@ const server = http.createServer((req, res) => {
 
     // Return pure array of data_book names only
     return sendJson(res, 200, dataBooksOnly);
+  }
+
+  // API Endpoint: /api/settings
+  if (url.pathname === '/api/settings' || url.pathname === '/api/settings/') {
+    if (req.method === 'GET') {
+      return sendJson(res, 200, getSettingsData());
+    }
+    if (req.method === 'POST') {
+      if (!checkApiKey(req, url)) {
+        return sendJson(res, 401, { error: 'Unauthorized: Invalid or missing API key.' });
+      }
+      let bodyData = '';
+      req.on('data', chunk => { bodyData += chunk; });
+      req.on('end', () => {
+        try {
+          const parsed = JSON.parse(bodyData || '{}');
+          const current = getSettingsData();
+          const updated = {
+            bannersPublished: typeof parsed.bannersPublished === 'boolean' ? parsed.bannersPublished : current.bannersPublished,
+            whatsappNumber: parsed.whatsappNumber ? String(parsed.whatsappNumber).trim().replace(/\D/g, '') : current.whatsappNumber
+          };
+          saveSettingsData(updated);
+          return sendJson(res, 200, { success: true, settings: updated });
+        } catch (err) {
+          return sendJson(res, 400, { error: 'Invalid JSON payload' });
+        }
+      });
+      return;
+    }
+  }
+
+  // API Endpoint: /api/banners
+  if (url.pathname === '/api/banners' || url.pathname === '/api/banners/') {
+    if (req.method === 'GET') {
+      return sendJson(res, 200, getBannersData());
+    }
+    if (req.method === 'POST') {
+      if (!checkApiKey(req, url)) {
+        return sendJson(res, 401, { error: 'Unauthorized: Invalid or missing API key.' });
+      }
+      let bodyData = '';
+      req.on('data', chunk => { bodyData += chunk; });
+      req.on('end', () => {
+        try {
+          const parsed = JSON.parse(bodyData || '{}');
+          saveBannersData(parsed);
+          return sendJson(res, 200, { success: true, banners: parsed });
+        } catch (err) {
+          return sendJson(res, 400, { error: 'Invalid JSON payload' });
+        }
+      });
+      return;
+    }
   }
 
 
@@ -214,6 +366,141 @@ function resolveCallerBaseUrl(req, url, body = {}) {
     });
   }
 
+  const settingsFilePath = path.join(__dirname, 'data', 'settings.json');
+  const apiSettingsFilePath = path.join(__dirname, 'api', 'settings');
+  function getSettingsData() {
+    try {
+      if (fs.existsSync(settingsFilePath)) {
+        return JSON.parse(fs.readFileSync(settingsFilePath, 'utf8'));
+      }
+    } catch (_) {}
+    return { bannersPublished: true, whatsappNumber: '8801711777508' };
+  }
+  function saveSettingsData(data) {
+    try {
+      const jsonStr = JSON.stringify(data, null, 2);
+      fs.writeFileSync(settingsFilePath, jsonStr, 'utf8');
+      if (fs.existsSync(path.dirname(apiSettingsFilePath))) {
+        fs.writeFileSync(apiSettingsFilePath, jsonStr, 'utf8');
+      }
+    } catch (e) {
+      console.error('Error saving settings.json:', e);
+    }
+  }
+
+  // API Endpoint: /api/settings
+  if (url.pathname === '/api/settings' || url.pathname === '/api/settings/') {
+    if (req.method === 'GET') {
+      return sendJson(res, 200, getSettingsData());
+    }
+    if (req.method === 'POST') {
+      let bodyData = '';
+      req.on('data', chunk => { bodyData += chunk; });
+      req.on('end', () => {
+        let body = {};
+        try {
+          body = JSON.parse(bodyData || '{}');
+        } catch (_) {}
+
+        const adminKey = req.headers['x-admin-key'] || url.searchParams.get('key') || body.adminKey || body.key;
+        if (adminKey !== API_KEY) {
+          return sendJson(res, 401, { error: 'Invalid admin key.' });
+        }
+
+        const current = getSettingsData();
+        if (typeof body.bannersPublished === 'boolean') {
+          current.bannersPublished = body.bannersPublished;
+        }
+        if (typeof body.whatsappNumber === 'string' && body.whatsappNumber.trim()) {
+          current.whatsappNumber = body.whatsappNumber.trim().replace(/\D/g, '');
+        }
+
+        saveSettingsData(current);
+        return sendJson(res, 200, { success: true, settings: current });
+      });
+      return;
+    }
+    return sendJson(res, 405, { error: 'Method not allowed.' });
+  }
+
+  // API Endpoint: /api/claim-clicks/countries
+  if (url.pathname === '/api/claim-clicks/countries') {
+    if (req.method !== 'GET') {
+      return sendJson(res, 405, { error: 'Method not allowed.' });
+    }
+    const adminKey = req.headers['x-admin-key'] || url.searchParams.get('key');
+    if (adminKey !== API_KEY) {
+      return sendJson(res, 401, { error: 'Invalid admin key.' });
+    }
+    const dateStr = url.searchParams.get('date');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return sendJson(res, 400, { error: 'A valid date is required (YYYY-MM-DD).' });
+    }
+    const data = getClicksData();
+    const dateCountries = (data.countries && data.countries[dateStr]) || {};
+    const countries = Object.entries(dateCountries)
+      .map(([country_code, total_clicks]) => ({ country_code, total_clicks }))
+      .sort((a, b) => b.total_clicks - a.total_clicks);
+    return sendJson(res, 200, { date: dateStr, countries });
+  }
+
+  // API Endpoint: /api/claim-clicks
+  if (url.pathname === '/api/claim-clicks') {
+    const data = getClicksData();
+
+    if (req.method === 'GET') {
+      const days = Math.min(Math.max(parseInt(url.searchParams.get('days') || '30', 10), 1), 365);
+      const dailyList = Object.entries(data.daily || {})
+        .map(([click_date, total_clicks]) => ({ click_date, total_clicks }))
+        .sort((a, b) => b.click_date.localeCompare(a.click_date))
+        .slice(0, days);
+      return sendJson(res, 200, {
+        count: data.total_clicks || 0,
+        daily: dailyList,
+        timeZone: REPORT_TIME_ZONE
+      });
+    }
+
+    if (req.method === 'POST') {
+      const today = getReportDate();
+      const country = 'XX';
+      data.total_clicks = (data.total_clicks || 0) + 1;
+      data.daily = data.daily || {};
+      data.daily[today] = (data.daily[today] || 0) + 1;
+      data.countries = data.countries || {};
+      data.countries[today] = data.countries[today] || {};
+      data.countries[today][country] = (data.countries[today][country] || 0) + 1;
+      saveClicksData(data);
+      return sendJson(res, 200, { count: data.total_clicks });
+    }
+
+    if (req.method === 'DELETE') {
+      const adminKey = req.headers['x-admin-key'] || url.searchParams.get('key');
+      if (adminKey !== API_KEY) {
+        return sendJson(res, 401, { error: 'Invalid admin key.' });
+      }
+      const cutoffDate = getReportDate(-6);
+      let deletedRows = 0;
+      let deletedClicks = 0;
+      for (const [dateKey, clicks] of Object.entries(data.daily || {})) {
+        if (dateKey < cutoffDate) {
+          deletedRows += 1;
+          deletedClicks += clicks;
+          delete data.daily[dateKey];
+        }
+      }
+      for (const dateKey of Object.keys(data.countries || {})) {
+        if (dateKey < cutoffDate) {
+          delete data.countries[dateKey];
+        }
+      }
+      saveClicksData(data);
+      return sendJson(res, 200, { cutoffDate, deletedRows, deletedClicks });
+    }
+
+    return sendJson(res, 405, { error: 'Method not allowed.' });
+  }
+
   // API Endpoint: /api/embed.js
   if (url.pathname === '/api/embed.js') {
     const filePath = path.join(__dirname, 'assets', 'js', 'embed.js');
@@ -226,6 +513,25 @@ function resolveCallerBaseUrl(req, url, body = {}) {
       return fs.createReadStream(filePath).pipe(res);
     }
   }
+
+  // Route /count /count/ -> count/index.html
+  if (url.pathname === '/count' || url.pathname === '/count/' || url.pathname === '/count/index.html') {
+    const filePath = path.join(__dirname, 'count', 'index.html');
+    if (fs.existsSync(filePath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', ...NO_CACHE_HEADERS });
+      return fs.createReadStream(filePath).pipe(res);
+    }
+  }
+
+  // Route /admin /admin/ -> admin.html
+  if (url.pathname === '/admin' || url.pathname === '/admin/' || url.pathname === '/admin/index.html') {
+    const filePath = path.join(__dirname, 'admin.html');
+    if (fs.existsSync(filePath)) {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', ...NO_CACHE_HEADERS });
+      return fs.createReadStream(filePath).pipe(res);
+    }
+  }
+
 
   // Route /data-book -> data-book.html
   if (url.pathname === '/data-book' || url.pathname === '/data-book/') {

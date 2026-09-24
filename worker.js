@@ -20,12 +20,188 @@ function json(data, init = {}) {
   headers.set('content-type', 'application/json; charset=utf-8');
   headers.set('cache-control', 'no-store');
   headers.set('access-control-allow-origin', '*');
-  headers.set('access-control-allow-methods', 'GET, POST, OPTIONS');
-  headers.set('access-control-allow-headers', 'Content-Type, Authorization, x-api-key');
+  headers.set('access-control-allow-methods', 'GET, POST, DELETE, OPTIONS');
+  headers.set('access-control-allow-headers', 'Content-Type, Authorization, x-api-key, x-admin-key');
   return new Response(JSON.stringify(data), { ...init, headers });
 }
 
+let tablesEnsured = false;
+async function ensureTables(database) {
+  if (tablesEnsured || !database) return;
+  try {
+    await database.batch([
+      database.prepare(`
+        CREATE TABLE IF NOT EXISTS click_stats (
+          button_id TEXT PRIMARY KEY,
+          total_clicks INTEGER NOT NULL DEFAULT 0 CHECK (total_clicks >= 0),
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `),
+      database.prepare(`
+        INSERT OR IGNORE INTO click_stats (button_id, total_clicks)
+        VALUES ('claim-offer', 0)
+      `),
+      database.prepare(`
+        CREATE TABLE IF NOT EXISTS daily_clicks (
+          click_date TEXT PRIMARY KEY,
+          total_clicks INTEGER NOT NULL DEFAULT 0 CHECK (total_clicks >= 0)
+        )
+      `),
+      database.prepare(`
+        CREATE TABLE IF NOT EXISTS daily_country_clicks (
+          click_date TEXT NOT NULL,
+          country_code TEXT NOT NULL,
+          total_clicks INTEGER NOT NULL DEFAULT 0 CHECK (total_clicks >= 0),
+          PRIMARY KEY (click_date, country_code)
+        )
+      `),
+      database.prepare(`
+        CREATE TABLE IF NOT EXISTS site_settings (
+          setting_key TEXT PRIMARY KEY,
+          setting_value TEXT NOT NULL
+        )
+      `),
+      database.prepare(`
+        INSERT OR IGNORE INTO site_settings (setting_key, setting_value)
+        VALUES ('bannersPublished', 'false'), ('whatsappNumber', '8801762050353')
+      `),
+      database.prepare(`
+        CREATE TABLE IF NOT EXISTS site_banners (
+          banner_id TEXT PRIMARY KEY,
+          banner_data TEXT NOT NULL,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `)
+    ]);
+    tablesEnsured = true;
+  } catch (err) {
+    console.warn('Could not auto-ensure tables:', err);
+  }
+}
+
+let inMemorySettings = { bannersPublished: false, whatsappNumber: '8801762050353' };
+
+async function readSiteSettings(database) {
+  if (!database) return inMemorySettings;
+  try {
+    await ensureTables(database);
+    const rows = await database.prepare('SELECT setting_key, setting_value FROM site_settings').all();
+    const settings = { ...inMemorySettings };
+    if (rows && rows.results) {
+      for (const row of rows.results) {
+        if (row.setting_key === 'bannersPublished') {
+          settings.bannersPublished = row.setting_value === 'true';
+        }
+        if (row.setting_key === 'whatsappNumber') {
+          settings.whatsappNumber = row.setting_value;
+        }
+      }
+    }
+    inMemorySettings = settings;
+    return settings;
+  } catch (err) {
+    console.warn('Could not read site_settings from D1:', err);
+    return inMemorySettings;
+  }
+}
+
+async function updateSiteSettings(database, newSettings) {
+  if (typeof newSettings.bannersPublished === 'boolean') {
+    inMemorySettings.bannersPublished = newSettings.bannersPublished;
+  }
+  if (typeof newSettings.whatsappNumber === 'string' && newSettings.whatsappNumber.trim()) {
+    inMemorySettings.whatsappNumber = newSettings.whatsappNumber.trim().replace(/\D/g, '');
+  }
+
+  if (database) {
+    try {
+      await ensureTables(database);
+      await database.batch([
+        database.prepare(`
+          INSERT INTO site_settings (setting_key, setting_value)
+          VALUES ('bannersPublished', ?), ('whatsappNumber', ?)
+          ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value
+        `).bind(String(inMemorySettings.bannersPublished), String(inMemorySettings.whatsappNumber))
+      ]);
+    } catch (err) {
+      console.warn('Could not update site_settings in D1:', err);
+    }
+  }
+
+  return inMemorySettings;
+}
+
+let inMemoryBanners = null;
+
+async function readSiteBanners(database, env, origin) {
+  let banners = inMemoryBanners;
+
+  if (database) {
+    try {
+      await ensureTables(database);
+      const row = await database.prepare("SELECT banner_data FROM site_banners WHERE banner_id = 'all'").first();
+      if (row && row.banner_data) {
+        banners = JSON.parse(row.banner_data);
+      }
+    } catch (err) {
+      console.warn('Could not read site_banners from D1:', err);
+    }
+  }
+
+  if (!banners && env?.ASSETS) {
+    try {
+      const res = await env.ASSETS.fetch(new Request(new URL('/data/banners.json', origin)));
+      if (res.ok) {
+        banners = await res.json();
+      }
+    } catch (_) {}
+  }
+
+  if (!banners) {
+    banners = {
+      bannersPublished: false,
+      whatsappNumber: '8801762050353'
+    };
+  }
+
+  // Synchronize with site settings
+  const settings = await readSiteSettings(database);
+  banners.bannersPublished = settings.bannersPublished;
+  banners.whatsappNumber = settings.whatsappNumber;
+  inMemoryBanners = banners;
+  return banners;
+}
+
+async function updateSiteBanners(database, newBanners) {
+  inMemoryBanners = { ...newBanners };
+
+  if (database) {
+    try {
+      await ensureTables(database);
+      await database.prepare(`
+        INSERT INTO site_banners (banner_id, banner_data, updated_at)
+        VALUES ('all', ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(banner_id) DO UPDATE SET
+          banner_data = excluded.banner_data,
+          updated_at = CURRENT_TIMESTAMP
+      `).bind(JSON.stringify(newBanners)).run();
+    } catch (err) {
+      console.warn('Could not update site_banners in D1:', err);
+    }
+  }
+
+  // Update site settings as well
+  await updateSiteSettings(database, {
+    bannersPublished: newBanners.bannersPublished,
+    whatsappNumber: newBanners.whatsappNumber
+  });
+
+  return inMemoryBanners;
+}
+
+
 async function readClickCount(database) {
+  await ensureTables(database);
   const row = await database
     .prepare('SELECT total_clicks FROM click_stats WHERE button_id = ?')
     .bind(BUTTON_ID)
@@ -217,7 +393,7 @@ function validateToken(token) {
             };
           }
         }
-      } catch (_) {}
+      } catch (_) { }
     }
   }
 
@@ -310,7 +486,7 @@ function resolveCallerBaseUrl(request, url, body = {}) {
       if (refUrl.origin && refUrl.origin !== 'null') {
         return refUrl.origin.replace(/\/+$/, '');
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   return url.origin.replace(/\/+$/, '');
@@ -325,19 +501,60 @@ export default {
       return new Response(null, {
         headers: {
           'access-control-allow-origin': '*',
-          'access-control-allow-methods': 'GET, POST, OPTIONS',
-          'access-control-allow-headers': 'Content-Type, Authorization, x-api-key',
+          'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
+          'access-control-allow-headers': 'Content-Type, Authorization, x-api-key, x-admin-key',
           'access-control-max-age': '86400'
         }
       });
     }
 
-    if (request.method === 'GET' && (url.pathname === '/count' || url.pathname === '/count/')) {
+    if (request.method === 'GET' && (url.pathname === '/count' || url.pathname === '/count/' || url.pathname === '/count/index.html')) {
       const countPageUrl = new URL('/count/index.html', url.origin);
       return env.ASSETS.fetch(new Request(countPageUrl, request));
     }
 
+    if (request.method === 'GET' && (url.pathname === '/admin' || url.pathname === '/admin/' || url.pathname === '/admin/index.html')) {
+      const adminPageUrl = new URL('/admin.html', url.origin);
+      return env.ASSETS.fetch(new Request(adminPageUrl, request));
+    }
 
+    // Site Settings API (Banners status & WhatsApp number)
+    if (url.pathname === '/api/settings' || url.pathname === '/api/settings/') {
+      if (request.method === 'GET') {
+        const settings = await readSiteSettings(env?.DB);
+        return json(settings);
+      }
+      if (request.method === 'POST') {
+        if (!hasValidApiKey(request, env, url)) {
+          return json({ error: 'Unauthorized: Invalid or missing API/Admin key.' }, { status: 401 });
+        }
+        let body = {};
+        try {
+          body = await request.json();
+        } catch (_) {}
+        const updated = await updateSiteSettings(env?.DB, body);
+        return json({ success: true, settings: updated });
+      }
+    }
+
+    // Site Banners API (Full banner details + status)
+    if (url.pathname === '/api/banners' || url.pathname === '/api/banners/') {
+      if (request.method === 'GET') {
+        const banners = await readSiteBanners(env?.DB, env, url.origin);
+        return json(banners);
+      }
+      if (request.method === 'POST') {
+        if (!hasValidApiKey(request, env, url)) {
+          return json({ error: 'Unauthorized: Invalid or missing API/Admin key.' }, { status: 401 });
+        }
+        let body = {};
+        try {
+          body = await request.json();
+        } catch (_) {}
+        const updated = await updateSiteBanners(env?.DB, body);
+        return json({ success: true, banners: updated });
+      }
+    }
 
     // Endpoint to show all available data_book attributes ONLY (pure array)
     if (url.pathname === '/api/data-books' || url.pathname === '/api/data-books/' || url.pathname === '/api/data-book' || url.pathname === '/api/tags') {
@@ -364,7 +581,7 @@ export default {
         try {
           postBody = await request.json();
           bookId = postBody.id || postBody.book || bookId;
-        } catch (_) {}
+        } catch (_) { }
       }
 
       if (!bookId) {
@@ -435,18 +652,37 @@ export default {
       return new Response(scriptRes.body, { ...scriptRes, headers });
     }
 
+    // Site settings endpoint (Promotional banners & WhatsApp)
+    if (url.pathname === '/api/settings' || url.pathname === '/api/settings/') {
+      if (request.method === 'GET') {
+        const settings = await readSiteSettings(env.DB);
+        return json(settings);
+      }
+      if (request.method === 'POST') {
+        let postBody = {};
+        try {
+          postBody = await request.json();
+        } catch (_) { }
+
+        const adminKey = request.headers.get('x-admin-key') || url.searchParams.get('key') || postBody.adminKey || postBody.key;
+        const validKey = env.COUNT_ADMIN_KEY || env.API_KEY;
+        if (!adminKey || adminKey !== validKey) {
+          return json({ error: 'Unauthorized: Invalid admin key.' }, { status: 401 });
+        }
+
+        const updated = await updateSiteSettings(env.DB, postBody);
+        return json({ success: true, settings: updated });
+      }
+      return json({ error: 'Method not allowed.' }, { status: 405 });
+    }
+
     if (url.pathname === '/api/claim-clicks/countries') {
       if (!env.DB) {
-        return json({ error: 'Database binding is unavailable.' }, { status: 503 });
+        return json({ error: 'Database binding (DB) is unavailable. Please check your wrangler.jsonc or Cloudflare Dashboard.' }, { status: 503 });
       }
 
       if (request.method !== 'GET') {
-        return json({ error: 'Method not allowed.' }, { status: 405, headers: { allow: 'GET' } });
-      }
-
-      const origin = request.headers.get('origin');
-      if (origin && origin !== url.origin) {
-        return json({ error: 'Cross-origin request denied.' }, { status: 403 });
+        return json({ error: 'Method not allowed.' }, { status: 405, headers: { allow: 'GET, OPTIONS' } });
       }
 
       if (!env.COUNT_ADMIN_KEY) {
@@ -459,26 +695,29 @@ export default {
 
       const clickDate = url.searchParams.get('date') || '';
       if (!/^\d{4}-\d{2}-\d{2}$/.test(clickDate)) {
-        return json({ error: 'A valid date is required.' }, { status: 400 });
+        return json({ error: 'A valid date is required (YYYY-MM-DD).' }, { status: 400 });
       }
 
       try {
+        await ensureTables(env.DB);
         return json({
           date: clickDate,
           countries: await readCountryClicks(env.DB, clickDate)
         });
       } catch (error) {
         console.error('Country click report failed:', error);
-        return json({ error: 'Unable to load country click data.' }, { status: 500 });
+        return json({ error: `Unable to load country click data: ${error.message || error}` }, { status: 500 });
       }
     }
 
     if (url.pathname === '/api/claim-clicks') {
       if (!env.DB) {
-        return json({ error: 'Database binding is unavailable.' }, { status: 503 });
+        return json({ error: 'Database binding (DB) is unavailable. Please check your wrangler.jsonc or Cloudflare Dashboard.' }, { status: 503 });
       }
 
       try {
+        await ensureTables(env.DB);
+
         if (request.method === 'GET') {
           const requestedDays = Number.parseInt(url.searchParams.get('days') || '30', 10);
           const numberOfDays = Math.min(Math.max(requestedDays || 30, 1), 365);
@@ -491,11 +730,6 @@ export default {
         }
 
         if (request.method === 'POST') {
-          const origin = request.headers.get('origin');
-          if (origin && origin !== url.origin) {
-            return json({ error: 'Cross-origin request denied.' }, { status: 403 });
-          }
-
           const countryCode = /^[A-Z]{2}$/.test(request.cf?.country || '')
             ? request.cf.country
             : 'XX';
@@ -503,11 +737,6 @@ export default {
         }
 
         if (request.method === 'DELETE') {
-          const origin = request.headers.get('origin');
-          if (origin && origin !== url.origin) {
-            return json({ error: 'Cross-origin request denied.' }, { status: 403 });
-          }
-
           if (!env.COUNT_ADMIN_KEY) {
             return json({ error: 'Admin key is not configured.' }, { status: 503 });
           }
@@ -521,11 +750,11 @@ export default {
 
         return json(
           { error: 'Method not allowed.' },
-          { status: 405, headers: { allow: 'GET, POST, DELETE' } }
+          { status: 405, headers: { allow: 'GET, POST, DELETE, OPTIONS' } }
         );
       } catch (error) {
         console.error('Claim click API failed:', error);
-        return json({ error: 'Unable to update the click count.' }, { status: 500 });
+        return json({ error: `Unable to process claim click request: ${error.message || error}` }, { status: 500 });
       }
     }
 
@@ -541,7 +770,10 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
-    if (url.pathname === '/list' || url.pathname === '/list/' || url.pathname === '/list/index.html') {
+    if (
+      url.pathname === '/list' || url.pathname === '/list/' || url.pathname === '/list/index.html' ||
+      url.pathname === '/count' || url.pathname === '/count/' || url.pathname === '/count/index.html'
+    ) {
       return env.ASSETS.fetch(request);
     }
 

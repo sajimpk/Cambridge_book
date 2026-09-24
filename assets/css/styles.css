@@ -1163,20 +1163,54 @@ h1 {
   align-items: start;
 }
 
-.promo-banner-wrapper.mock-test {
-  order: 2;
-}
-
 #bookDetail {
   order: 1;
 }
 
-.promo-banner-wrapper.crash-course {
-  order: 3;
+.book-sidebar-banner.right {
+  order: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .book-sidebar-banner.left {
-  order: 4;
+  order: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* 2-Side Placement Styling (Free of 'ad'/'ads' classes to bypass blocker rules) */
+.side-column-unit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.85rem 0.5rem;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.side-left-unit {
+  min-height: 250px;
+}
+
+.side-right-unit {
+  min-height: 310px;
+}
+
+.side-network-box {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
 }
 
 @media (max-width: 1199px) {
@@ -1188,33 +1222,35 @@ h1 {
 @media (min-width: 1200px) {
   .book-page-layout {
     grid-template-columns: 260px minmax(0, 1fr) 240px;
-    grid-template-rows: auto auto;
     gap: 2rem;
+    align-items: start;
   }
   
   .book-sidebar-banner.left {
     grid-column: 1;
-    grid-row: 1 / span 2;
     order: unset;
+  }
+
+  .side-left-unit {
+    position: sticky;
+    top: 1.5rem;
+    z-index: 5;
   }
 
   #bookDetail {
     grid-column: 2;
-    grid-row: 1 / span 2;
     order: unset;
   }
 
-  .promo-banner-wrapper.mock-test {
+  .book-sidebar-banner.right {
     grid-column: 3;
-    grid-row: 1;
     order: unset;
   }
 
-  .promo-banner-wrapper.crash-course {
-    grid-column: 3;
-    grid-row: 2;
-    order: unset;
-    margin-top: 1.5rem;
+  .side-right-unit {
+    position: sticky;
+    top: 1.5rem;
+    z-index: 5;
   }
 }
 
@@ -1703,6 +1739,61 @@ h1 {
 }
 
 
+
+/* Network Placement Zone (Free of 'ad'/'ads' classes to prevent blocker false-positives) */
+.network-display-zone {
+  width: 100%;
+  margin: 2.5rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.network-display-wrap {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.network-slot-primary {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 300px;
+  max-width: 100%;
+  text-align: center;
+}
+
+.network-slot-secondary {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 160px;
+  min-height: 300px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .network-display-wrap {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem 0.5rem;
+  }
+  .network-slot-primary {
+    min-width: 100%;
+  }
+}
 
 /* Script Ads row styling */
 .script-ads-row {
@@ -3433,6 +3524,349 @@ body { top: 0 !important; }
   height: 36px;
   right: 24px;
 }
+
+/* ==========================================================
+   Admin Settings & Promotional Banners Management Styles
+   ========================================================== */
+
+/* Admin Settings Modal Overlay */
+.site-admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: adminFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes adminFadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.site-admin-modal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-premium);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 480px;
+  padding: 1.75rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  color: var(--text);
+}
+
+.site-admin-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.site-admin-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 0.25rem;
+}
+
+.site-admin-modal-header h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.site-admin-close-btn {
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.site-admin-close-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.site-admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.site-admin-field,
+.site-admin-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.site-admin-field label,
+.site-admin-group label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.site-admin-field input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
+  font-size: 0.95rem;
+  transition: var(--transition);
+}
+
+.site-admin-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+  outline: none;
+}
+
+.site-admin-status-box {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-strong);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.site-admin-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.site-admin-dot.active {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.site-admin-dot.inactive {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+.site-admin-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.site-admin-input-row input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.site-admin-btn-small {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.site-admin-btn-action {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  margin-top: 0.25rem;
+}
+
+.site-admin-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.site-admin-alert {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  animation: adminFadeIn 0.2s ease;
+}
+
+.site-admin-alert.success {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.site-admin-alert.error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.site-admin-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.site-admin-count-link {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.site-admin-count-link:hover {
+  text-decoration: underline;
+}
+
+/* Footer Admin Trigger Link */
+.site-footer-admin-link {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: var(--transition);
+  margin-left: auto;
+}
+
+.site-footer-admin-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Dashboard /count Site Settings Card */
+.admin-dashboard-settings {
+  margin-bottom: 2rem;
+}
+
+.admin-dash-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+}
+
+.admin-dash-setting-item {
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-dash-setting-item h3 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.admin-dash-setting-item p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.admin-dash-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-dash-input-group input {
+  flex: 1;
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.site-admin-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.site-admin-badge.active {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.site-admin-badge.inactive {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+/* ========================================================
+   PROMOTIONAL BANNERS INSTANT HIDE / REMOVE RULES
+   Applied automatically when banners are disabled in Admin
+   ======================================================== */
+html[data-banners-hidden="true"] .global-offer-bar,
+html[data-banners-hidden="true"] .global-offer,
+html[data-banners-hidden="true"] .services-section,
+html[data-banners-hidden="true"] .services-sidebar-card,
+html[data-banners-hidden="true"] .platform-features-card,
+html[data-banners-hidden="true"] .promo-banner-wrapper,
+html[data-banners-hidden="true"] .offer-card-wrapper,
+html[data-banners-hidden="true"] .starter-deal-card,
+body.banners-hidden .global-offer-bar,
+body.banners-hidden .global-offer,
+body.banners-hidden .services-section,
+body.banners-hidden .services-sidebar-card,
+body.banners-hidden .platform-features-card,
+body.banners-hidden .promo-banner-wrapper,
+body.banners-hidden .offer-card-wrapper,
+body.banners-hidden .starter-deal-card {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+
 
 
 

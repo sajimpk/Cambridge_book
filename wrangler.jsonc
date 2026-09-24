@@ -15,7 +15,13 @@
 		{
 			"binding": "DB",
 			"database_name": "clickcount",
-			"database_id": "d2481598-7f78-49b9-8a7d-9c70dd7924d7"
+			"database_id": "0670b08f-17dd-4584-baea-d7f53931a880"
+		},
+		{
+			"binding": "clickcount",
+			"database_name": "clickcount",
+			"database_id": "0670b08f-17dd-4584-baea-d7f53931a880",
+			"remote": true
 		}
 	],
 	"triggers": {

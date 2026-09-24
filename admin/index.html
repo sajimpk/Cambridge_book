@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin Dashboard • Banner Management</title>
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+  <style>
+    .admin-page-wrap {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .admin-top-nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .admin-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .admin-badge-role {
+      background: var(--accent-light);
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .admin-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .admin-container {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 0 1rem 5rem;
+      width: 100%;
+    }
+    /* Login Screen Card */
+    .admin-auth-card {
+      max-width: 440px;
+      margin: 4rem auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.25rem;
+      box-shadow: var(--shadow-premium);
+      text-align: center;
+    }
+    .admin-auth-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+    }
+    .admin-auth-card h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .admin-auth-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 1.75rem;
+    }
+    .admin-auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      text-align: left;
+    }
+    .admin-auth-form input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--surface-strong);
+      color: var(--text);
+      font-size: 1rem;
+    }
+    .admin-auth-form input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+      outline: none;
+    }
+    /* Dashboard Sections */
+    .admin-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 2rem;
+    }
+    .admin-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      gap: 1rem;
+    }
+    .admin-section-header h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin: 0;
+    }
+    .admin-section-header p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0.25rem 0 0;
+    }
+    .admin-form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .admin-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .admin-form-group label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .admin-form-group input,
+    .admin-form-group textarea {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--surface-strong);
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+    .admin-form-group textarea {
+      resize: vertical;
+      min-height: 90px;
+      line-height: 1.5;
+    }
+    .admin-form-group input:focus,
+    .admin-form-group textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+      outline: none;
+    }
+    /* Sticky bottom save bar */
+    .admin-save-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 40;
+    }
+    .admin-status-toast {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: none;
+    }
+    .admin-status-toast.success {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      display: inline-block;
+    }
+    .admin-status-toast.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      display: inline-block;
+    }
+  </style>
+</head>
+<body class="page-shell" data-theme="light">
+  <div class="admin-page-wrap">
+    <!-- Top Nav -->
+    <header class="admin-top-nav">
+      <div class="admin-brand">
+        <a href="/" style="font-weight: 800; font-size: 1.15rem;">Book Library</a>
+        <span class="admin-badge-role">Admin Portal</span>
+      </div>
+      <div class="admin-nav-actions">
+        <a href="/" class="button button-secondary" style="font-size: 0.85rem; padding: 0.5rem 0.85rem;">View Site</a>
+        <a href="/count/" class="button button-secondary" style="font-size: 0.85rem; padding: 0.5rem 0.85rem;">Click Stats</a>
+        <button id="adminLogoutBtn" class="button" style="font-size: 0.85rem; padding: 0.5rem 0.85rem; color: #ef4444;" type="button" hidden>Logout</button>
+      </div>
+    </header>
+
+    <main class="admin-container">
+      <!-- 1. Authentication Card (shown if key not provided) -->
+      <section class="admin-auth-card" id="adminAuthSection">
+        <span class="admin-auth-icon" aria-hidden="true">🔐</span>
+        <h1>Admin Authentication</h1>
+        <p>Enter your secret Admin Key to edit promotional banners and manage database settings.</p>
+        <form id="adminLoginForm" class="admin-auth-form" onsubmit="return false;">
+          <input type="password" id="loginKeyInput" placeholder="Enter admin key..." autocomplete="current-password" required />
+          <button type="submit" id="loginSubmitBtn" class="button button-primary" style="padding: 0.85rem;">Unlock Dashboard</button>
+          <div id="loginErrorMsg" class="site-admin-alert error" style="display: none; margin-top: 0.5rem;"></div>
+        </form>
+      </section>
+
+      <!-- 2. Main Dashboard Form (shown when logged in) -->
+      <div id="adminDashboardSection" style="display: none;">
+        <!-- Global Publish/Remove & WhatsApp Banner Control -->
+        <section class="admin-section" style="border: 2px solid var(--accent); background: var(--surface);">
+          <div class="admin-section-header">
+            <div>
+              <h2>Global Banner Publishing & WhatsApp</h2>
+              <p>Instantly publish or remove all promotional banners and configure the global WhatsApp contact number.</p>
+            </div>
+            <span class="site-admin-badge" id="globalPublishBadge">Checking...</span>
+          </div>
+
+          <div class="admin-form-row">
+            <div class="admin-form-group">
+              <label>Promotional Banners Status & Quick Toggle</label>
+              <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.25rem;">
+                <div id="bannerStatusIndicator" style="font-size: 0.95rem; font-weight: 700;">
+                  <!-- Filled by JS -->
+                </div>
+                <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                  <button type="button" id="toggleGlobalPublishBtn" class="button button-primary" style="padding: 0.75rem 1.25rem; font-weight: 700;">
+                    Toggle Status
+                  </button>
+                  <small style="color: var(--text-muted);">Controls Our Services, Mock Features, Global Offer & 404 Deal banners.</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="admin-form-group">
+              <label for="editWhatsappNumber">Global WhatsApp Contact Number</label>
+              <input type="text" id="editWhatsappNumber" placeholder="e.g. 8801762050353" />
+              <small style="color: var(--text-muted);">Automatically updates all claim buttons, booking links, and deal buttons.</small>
+            </div>
+          </div>
+        </section>
+
+        <!-- Banner 1: Our Services -->
+        <section class="admin-section">
+          <div class="admin-section-header">
+            <div>
+              <h2>1. "Our Services" Banner</h2>
+              <p>Displayed on Home page (bottom grid) and Book details page (left sidebar).</p>
+            </div>
+          </div>
+
+          <div class="admin-form-row">
+            <div class="admin-form-group">
+              <label for="editServicesTitle">Section Title</label>
+              <input type="text" id="editServicesTitle" placeholder="Our Services" />
+            </div>
+            <div class="admin-form-group">
+              <label for="editServicesSubtitle">Sidebar Subtitle</label>
+              <input type="text" id="editServicesSubtitle" placeholder="Learn with confidence" />
+            </div>
+          </div>
+
+          <div class="admin-form-group">
+            <label for="editServicesItems">Services List (One per line: Title | Duration/Tag | Description | Badge)</label>
+            <textarea id="editServicesItems" rows="6" placeholder="Title | 1 Month Access | Description | Popular"></textarea>
+            <small style="color: var(--text-muted);">Format: <code>Title | Tag | Description | Badge (optional)</code></small>
+          </div>
+        </section>
+
+        <!-- Banner 2: Computer-Based IELTS Platform Features -->
+        <section class="admin-section">
+          <div class="admin-section-header">
+            <div>
+              <h2>2. "Platform Features" Banner</h2>
+              <p>Displayed on Book details page (right sidebar, top purple card).</p>
+            </div>
+          </div>
+
+          <div class="admin-form-row">
+            <div class="admin-form-group">
+              <label for="editPlatformEyebrow">Eyebrow Tagline</label>
+              <input type="text" id="editPlatformEyebrow" placeholder="Computer-Based IELTS" />
+            </div>
+            <div class="admin-form-group">
+              <label for="editPlatformTitle">Banner Heading</label>
+              <input type="text" id="editPlatformTitle" placeholder="Everything you need" />
+            </div>
+            <div class="admin-form-group">
+              <label for="editPlatformCta">Button Text</label>
+              <input type="text" id="editPlatformCta" placeholder="Ask about the platform →" />
+            </div>
+          </div>
+
+          <div class="admin-form-group">
+            <label for="editPlatformFeatures">Feature Points (One point per line)</label>
+            <textarea id="editPlatformFeatures" rows="6" placeholder="Feature title - description"></textarea>
+          </div>
+        </section>
+
+        <!-- Banner 3: Global IELTS Offer Banner -->
+        <section class="admin-section">
+          <div class="admin-section-header">
+            <div>
+              <h2>3. "Global IELTS Offer" Banner</h2>
+              <p>Displayed on Book details page (right sidebar with language selector).</p>
+            </div>
+          </div>
+
+          <div class="admin-form-row">
+            <div class="admin-form-group">
+              <label for="editGlobalEyebrow">Eyebrow</label>
+              <input type="text" id="editGlobalEyebrow" placeholder="Global IELTS offer" />
+            </div>
+            <div class="admin-form-group">
+              <label for="editGlobalTitle">Offer Heading</label>
+              <input type="text" id="editGlobalTitle" placeholder="One of the world's lowest-priced IELTS mock test experiences." />
+            </div>
+          </div>
+
+          <div class="admin-form-group" style="margin-bottom: 1rem;">
+            <label for="editGlobalCopy">Offer Description</label>
+            <textarea id="editGlobalCopy" rows="3" placeholder="Practice smoothly from any country with a fast, learner-friendly experience."></textarea>
+          </div>
+
+          <div class="admin-form-row">
+            <div class="admin-form-group">
+              <label for="editGlobalFeatures">Feature Bullet Points (One per line)</label>
+              <textarea id="editGlobalFeatures" rows="3" placeholder="Smooth and easy to use&#10;Binance payment supported&#10;Worldwide WhatsApp support"></textarea>
+            </div>
+            <div class="admin-form-group">
+              <label for="editGlobalButtonText">Button Label</label>
+              <input type="text" id="editGlobalButtonText" placeholder="Contact on WhatsApp" />
+            </div>
+          </div>
+        </section>
+
+        <!-- Banner 4: 404 Page Starter Deal -->
+        <section class="admin-section">
+          <div class="admin-section-header">
+            <div>
+              <h2>4. "404 Page Starter Deal" Banner</h2>
+              <p>Displayed when visitors encounter an invalid or expired link on 404.html.</p>
+            </div>
+          </div>
+
+          <div class="admin-form-row">
+            <div class="admin-form-group">
+              <label for="editDealTitle">Deal Title</label>
+              <input type="text" id="editDealTitle" placeholder="Complete IELTS Preparation & Mock Test Pack" />
+            </div>
+            <div class="admin-form-group">
+              <label for="editDealSubtitle">Deal Subtitle</label>
+              <input type="text" id="editDealSubtitle" placeholder="Access authentic Cambridge study materials..." />
+            </div>
+          </div>
+
+          <div class="admin-form-row">
+            <div class="admin-form-group">
+              <label for="editDealRegularPrice">Original Price</label>
+              <input type="text" id="editDealRegularPrice" placeholder="৳1,000" />
+            </div>
+            <div class="admin-form-group">
+              <label for="editDealCurrentPrice">Offer Price</label>
+              <input type="text" id="editDealCurrentPrice" placeholder="৳350" />
+            </div>
+            <div class="admin-form-group">
+              <label for="editDealPeriod">Period Tag</label>
+              <input type="text" id="editDealPeriod" placeholder="/ Months Unlimited" />
+            </div>
+            <div class="admin-form-group">
+              <label for="editDealButtonText">Button Label</label>
+              <input type="text" id="editDealButtonText" placeholder="Claim Starter Deal →" />
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Sticky Save Bar -->
+    <div class="admin-save-bar" id="adminSaveBar" style="display: none;">
+      <div>
+        <span id="saveStatusToast" class="admin-status-toast">Ready</span>
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        <button type="button" class="button button-secondary" id="resetDefaultsBtn">Reset Defaults</button>
+        <button type="button" class="button button-primary" id="saveAllBannersBtn" style="padding: 0.75rem 1.5rem; font-weight: 800;">
+          💾 Save & Update Database
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/js/admin.js" defer></script>
+</body>
+</html>
