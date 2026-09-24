@@ -72,7 +72,7 @@
 
 <script 
   src="https://books.sajim-arifacademy.workers.dev/api/embed.js" 
-  data-api-key="sajimpk" 
+  data-api-key="YOUR_API_KEY" 
   defer
 ></script>
 ```
@@ -99,7 +99,7 @@
   <!-- ২. Embed Script (API Key সহ) -->
   <script 
     src="https://books.sajim-arifacademy.workers.dev/api/embed.js" 
-    data-api-key="sajimpk" 
+    data-api-key="YOUR_API_KEY" 
     defer
   ></script>
 
@@ -120,7 +120,7 @@
 
 ```bash
 curl -X GET "https://your-worker.workers.dev/api/data-books" \
-  -H "x-api-key: sajimpk"
+  -H "x-api-key: YOUR_API_KEY"
 ```
 
 #### Response:
@@ -143,7 +143,7 @@ curl -X GET "https://your-worker.workers.dev/api/data-books" \
 - **বিকল্প পাথ:** `/api/book-link`
 
 ```bash
-curl -X GET "https://your-worker.workers.dev/api/books/resolve?id=cambridge-ielts-19&key=sajimpk&site_url=https://theirsite.com"
+curl -X GET "https://your-worker.workers.dev/api/books/resolve?id=cambridge-ielts-19&key=YOUR_API_KEY&site_url=https://theirsite.com"
 ```
 
 #### Response:
@@ -170,7 +170,7 @@ curl -X GET "https://your-worker.workers.dev/api/books/resolve?id=cambridge-ielt
 - **বিকল্প পাথ:** `/api/book-details`
 
 ```bash
-curl -X GET "https://your-worker.workers.dev/api/book-info?id=cambridge-ielts-19&key=sajimpk"
+curl -X GET "https://your-worker.workers.dev/api/book-info?id=cambridge-ielts-19&key=YOUR_API_KEY"
 ```
 
 #### Response:

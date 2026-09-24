@@ -772,7 +772,9 @@ export default {
 
     if (
       url.pathname === '/list' || url.pathname === '/list/' || url.pathname === '/list/index.html' ||
-      url.pathname === '/count' || url.pathname === '/count/' || url.pathname === '/count/index.html'
+      url.pathname === '/count' || url.pathname === '/count/' || url.pathname === '/count/index.html' ||
+      url.pathname === '/api-guide' || url.pathname === '/api-guide/' || url.pathname === '/api-guide/index.html' || url.pathname === '/api-guide.html' ||
+      url.pathname === '/admin' || url.pathname === '/admin/' || url.pathname === '/admin/index.html' || url.pathname === '/admin.html'
     ) {
       return env.ASSETS.fetch(request);
     }

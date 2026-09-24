@@ -264,9 +264,6 @@
     applySettings(currentSettings);
     fetchSettings();
   }
-
-  // MutationObserver to auto-apply to dynamically inserted elements
-  const observer = new MutationObserver(() => applySettings(currentSettings));
-  observer.observe(document.documentElement, { childList: true, subtree: true });
 })();
+
 

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Setup Guide • Book Library Developer Docs</title>
+  <meta name="description" content="Complete API & Embed Setup Guide for integrating IELTS book library with or without an API key." />
+  <link rel="canonical" href="./" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+  <script src="https://pl31489803.profitableratecpmnetwork.com/db/42/d1/db42d1194031e3704ecba29cba3b3e19.js"></script>
+  <style>
+    .guide-wrap {
+      max-width: 1040px;
+      margin: 2.5rem auto 4rem;
+      padding: 0 1.25rem;
+    }
+    .guide-hero {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .guide-hero h1 {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .guide-hero p {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 680px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    .security-notice-box {
+      background: rgba(37, 99, 235, 0.06);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .security-notice-box .icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+    .security-notice-box p {
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.5;
+      margin: 0;
+    }
+    /* Mode Selector Tabs */
+    .mode-tab-buttons {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      background: var(--surface-strong);
+      padding: 0.4rem;
+      border-radius: var(--radius-lg);
+      width: fit-content;
+      max-width: 100%;
+      flex-wrap: wrap;
+    }
+    .mode-tab-btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .mode-tab-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow-sm);
+    }
+    .guide-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 2rem;
+    }
+    .guide-card h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .guide-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+    }
+    .code-block-wrap {
+      position: relative;
+      margin: 1.25rem 0;
+    }
+    .code-block-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+      color: #94a3b8;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.6rem 1rem;
+      border-top-left-radius: var(--radius-md);
+      border-top-right-radius: var(--radius-md);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .copy-code-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-code-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    pre.code-block {
+      background: #090d16;
+      color: #e2e8f0;
+      padding: 1.25rem;
+      border-bottom-left-radius: var(--radius-md);
+      border-bottom-right-radius: var(--radius-md);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      overflow-x: auto;
+      margin: 0;
+    }
+    .key-badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: monospace;
+    }
+    .key-badge.safe {
+      background: rgba(16, 185, 129, 0.12);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .key-badge.masked {
+      background: rgba(99, 102, 241, 0.12);
+      color: #6366f1;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    /* Comparison Grid */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .compare-col {
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+    }
+    .compare-col h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .compare-col ul {
+      list-style: none;
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .compare-col li {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .compare-col li span {
+      color: #10b981;
+      font-weight: 800;
+    }
+    .api-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.9rem;
+    }
+    .api-table th, .api-table td {
+      padding: 0.85rem 1rem;
+      border: 1px solid var(--border);
+      text-align: left;
+    }
+    .api-table th {
+      background: var(--surface-strong);
+      font-weight: 700;
+      color: var(--text);
+    }
+    .method-badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+    }
+  </style>
+</head>
+<body class="page-shell" data-theme="light">
+  <!-- Top Global Navbar -->
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="/" class="site-logo">
+        <span class="site-logo__icon" aria-hidden="true">📚</span>
+        <span class="site-logo__text">Book Library</span>
+      </a>
+
+      <nav class="site-nav" id="siteNav" aria-label="Main Navigation">
+        <ul class="site-nav__list">
+          <li><a href="/" class="site-nav__link">Home</a></li>
+          <li><a href="/list/" class="site-nav__link">All Books</a></li>
+          <li><a href="/api-guide/" class="site-nav__link site-nav__link--highlight active">⚡ API Setup Guide</a></li>
+          <li><a href="/count/" class="site-nav__link">Stats</a></li>
+        </ul>
+      </nav>
+
+      <div class="site-header__actions">
+        <button type="button" id="themeToggle" class="button button-secondary theme-toggle-btn" aria-label="Toggle visual theme">Dark</button>
+        <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open Navigation Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="guide-wrap">
+    <div class="guide-hero">
+      <h1>⚡ API Setup & Integration Guide</h1>
+      <p>আপনার ওয়েবসাইটে বা অ্যাপ্লিকেশনে আমাদের IELTS লাইব্রেরি যুক্ত করার সম্পূর্ণ গাইড। API Key ছাড়া অথবা API Key সহ — যেকোনো পদ্ধতিতে সহজেই ইন্টিগ্রেট করুন।</p>
+    </div>
+
+    <!-- Security Guarantee Box -->
+    <div class="security-notice-box">
+      <div class="icon">🔒</div>
+      <div>
+        <p><strong>নিরাপত্তা ও প্রাইভেসি প্রটেকশন:</strong> মূল সিক্রেট API Key পাবলিক গাইডে কখনোই প্রকাশ করা হয় না। এখানে <span class="key-badge masked">YOUR_API_KEY</span> প্লেসহোল্ডার হিসেবে ব্যবহৃত হয়েছে। নিজস্ব ডোমেইনে রিডার হোস্ট করার জন্য অনুমোদিত কী পেতে অ্যাডমিন প্যানেল থেকে যোগাযোগ করুন।</p>
+      </div>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <div class="mode-tab-buttons" role="tablist">
+      <button type="button" class="mode-tab-btn active" id="tabModeNoKey" role="tab" aria-selected="true" onclick="switchMode('no-key')">
+        <span>🚀 ১. API Key ছাড়া (Instant Direct Embed)</span>
+      </button>
+      <button type="button" class="mode-tab-btn" id="tabModeWithKey" role="tab" aria-selected="false" onclick="switchMode('with-key')">
+        <span>🛡️ ২. API Key সহ (Custom Domain Partner Reader)</span>
+      </button>
+    </div>
+
+    <!-- SECTION 1: Mode Without Key (Default) -->
+    <div id="contentNoKey">
+      <section class="guide-card">
+        <h2>🚀 ১. API Key ছাড়া ইন্টিগ্রেশন (Direct Embed)</h2>
+        <p>এটি সবচেয়ে সহজ ও ঝামেলামুক্ত পদ্ধতি। আপনার ওয়েবসাইটে কোনো API Key বা জটিল কনফিগারেশন ছাড়াই বইয়ের লিঙ্ক বা বাটন বসাতে পারেন। লিঙ্কে ক্লিক করলেই সুরক্ষিত ডায়নামিক ১.৫ সেকেন্ডের টোকেন তৈরি হয়ে সরাসরি লাইব্রেরিতে বই ওপেন হবে।</p>
+
+        <div class="compare-grid">
+          <div class="compare-col">
+            <h3>✨ সুবিশাল সুবিধা:</h3>
+            <ul>
+              <li><span>✓</span> কোনো API Key কনফিগার করার প্রয়োজন নেই।</li>
+              <li><span>✓</span> আপনার সাইটে আলাদা রিডার পেজ তৈরি করতে হবে না।</li>
+              <li><span>✓</span> স্বয়ংক্রিয়ভাবে এক্সপায়ার-প্রুফ 0ms সিকিউর টোকেন জেনারেট হয়।</li>
+              <li><span>✓</span> সব ডিভাইসে শতভাগ ফাস্ট ও রেসপন্সিভ।</li>
+            </ul>
+          </div>
+          <div class="compare-col">
+            <h3>🎯 কার্যপদ্ধতি:</h3>
+            <p>ব্যবহারকারী লিংকে ক্লিক করলে তাৎক্ষণিকভাবে মূল লাইব্রেরিতে রিডাইরেক্ট হবে:</p>
+            <code style="word-break: break-all; color: var(--accent); font-weight: 700;">https://free.ieltsbooks.workers.dev/book/?book=SECURE_TOKEN</code>
+          </div>
+        </div>
+
+        <h3 style="font-size: 1.1rem; font-weight: 800; margin-top: 1.5rem;">আপনার সাইটে যেভাবে বসাবেন:</h3>
+        
+        <div class="code-block-wrap">
+          <div class="code-block-header">
+            <span>HTML Integration (API Key ছাড়া)</span>
+            <button type="button" class="copy-code-btn" onclick="copySnippet('codeNoKey')">Copy Code</button>
+          </div>
+          <pre class="code-block" id="codeNoKey">&lt;!-- ১. আপনার পছন্দের বাটনে data-book অ্যাট্রিবিউটে বইয়ের আইডি দিন --&gt;
+&lt;a href="#" class="btn btn-primary" data-book="cambridge-ielts-19"&gt;
+  📖 Read Cambridge IELTS 19
+&lt;/a&gt;
+
+&lt;!-- ২. পেজের শেষে আমাদের হালকা Embed Script যুক্ত করুন --&gt;
+&lt;script 
+  src="https://free.ieltsbooks.workers.dev/api/embed.js" 
+  defer
+&gt;&lt;/script&gt;</pre>
+        </div>
+      </section>
+    </div>
+
+    <!-- SECTION 2: Mode With Key -->
+    <div id="contentWithKey" style="display: none;">
+      <section class="guide-card">
+        <h2>🛡️ ২. API Key সহ ইন্টিগ্রেশন (Custom Domain Reader)</h2>
+        <p>আপনি যদি চান বই পড়ার রিডারটি আমাদের ডোমেইনের পরিবর্তে <strong>আপনার নিজস্ব ডোমেইনে (<code style="color: var(--accent);">yourwebsite.com/book/</code>)</strong> চালু থাকবে, তবে অনুমোদিত API Key ব্যবহার করে এই মোডটি সক্রিয় করুন।</p>
+
+        <div class="security-notice-box" style="margin: 1rem 0 1.5rem; background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.25);">
+          <div class="icon">🔑</div>
+          <div>
+            <p><strong>কী প্লেসহোল্ডার সতর্কতা:</strong> নিচে কোডে থাকা <span class="key-badge masked">YOUR_API_KEY</span> এর জায়গায় আপনার অ্যাডমিন থেকে প্রাপ্ত সিক্রেট কী বসান। পাবলিক পেজে কখনোই আপনার গোপন কী প্রদর্শন করবেন না।</p>
+          </div>
+        </div>
+
+        <h3 style="font-size: 1.15rem; font-weight: 800; margin-top: 1.25rem;">ধাপ ১: আপনার সাইটের পেজে বাটন ও স্ক্রিপ্ট (API Key সহ)</h3>
+        <div class="code-block-wrap">
+          <div class="code-block-header">
+            <span>Step 1: Partner Page Button</span>
+            <button type="button" class="copy-code-btn" onclick="copySnippet('codeWithKeyBtn')">Copy Code</button>
+          </div>
+          <pre class="code-block" id="codeWithKeyBtn">&lt;!-- বাটন বা লিংক --&gt;
+&lt;a href="#" class="btn btn-primary" data-book="cambridge-ielts-19"&gt;
+  📖 Read Cambridge IELTS 19
+&lt;/a&gt;
+
+&lt;!-- Embed Script (API Key সহ) --&gt;
+&lt;script 
+  src="https://free.ieltsbooks.workers.dev/api/embed.js" 
+  data-api-key="YOUR_API_KEY" 
+  defer
+&gt;&lt;/script&gt;</pre>
+        </div>
+
+        <h3 style="font-size: 1.15rem; font-weight: 800; margin-top: 2rem;">ধাপ ২: আপনার সাইটে নিজস্ব রিডার পেজ তৈরি (<code style="color: var(--accent);">yourwebsite.com/book/index.html</code>)</h3>
+        <p>আপনার ডোমেইনের <code>book/index.html</code> ফাইলে নিচের সম্পূর্ণ রিডার কোডটি পেস্ট করে সেভ করুন:</p>
+
+        <div class="code-block-wrap">
+          <div class="code-block-header">
+            <span>Step 2: Partner Reader Page (yourwebsite.com/book/index.html)</span>
+            <button type="button" class="copy-code-btn" onclick="copySnippet('codeWithKeyReader')">Copy Code</button>
+          </div>
+          <pre class="code-block" id="codeWithKeyReader">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;IELTS Book Reader&lt;/title&gt;
+&lt;/head&gt;
+&lt;body style="font-family: system-ui, sans-serif; background: #f8fafc; margin: 0; padding: 2rem 1rem;"&gt;
+  
+  &lt;!-- ১. রিডার কন্টেইনার (এখানে বইয়ের কভার, তথ্য ও রিড বাটন লোড হবে) --&gt;
+  &lt;div id="book-reader-container"&gt;&lt;/div&gt;
+
+  &lt;!-- ২. Embed Script (আপনার API Key সহ) --&gt;
+  &lt;script 
+    src="https://free.ieltsbooks.workers.dev/api/embed.js" 
+    data-api-key="YOUR_API_KEY" 
+    defer
+  &gt;&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+        </div>
+      </section>
+    </div>
+
+    <!-- SECTION 3: Server API Reference Table -->
+    <section class="guide-card">
+      <h2>📡 সার্ভার API এন্ডপয়েন্টস রেফারেন্স (Backend / REST API)</h2>
+      <p>আপনার কাস্টম সার্ভার, মোবাইল অ্যাপ বা অটোমেশনের জন্য নিচের এন্ডপয়েন্টগুলো ব্যবহার করতে পারেন:</p>
+
+      <div style="overflow-x: auto;">
+        <table class="api-table">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Endpoint</th>
+              <th>Description</th>
+              <th>Auth Requirement</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="method-badge">GET</span></td>
+              <td><code>/api/embed.js</code></td>
+              <td>ক্লিকের সাথে সাথে 0ms ডাইনামিক টোকেন জেনারেটর স্ক্রিপ্ট</td>
+              <td>পাবলিক (Key সহ বা ছাড়া)</td>
+            </tr>
+            <tr>
+              <td><span class="method-badge">GET</span></td>
+              <td><code>/api/data-books</code></td>
+              <td>সব বইয়ের আইডি ও স্লাগ লিস্ট</td>
+              <td>Header: <code>x-api-key: YOUR_API_KEY</code></td>
+            </tr>
+            <tr>
+              <td><span class="method-badge">GET</span></td>
+              <td><code>/api/books/resolve</code></td>
+              <td>বইয়ের আইডি থেকে সুরক্ষিত ডাইনামিক লিঙ্ক রেজল্যুশন</td>
+              <td>Query: <code>?key=YOUR_API_KEY</code></td>
+            </tr>
+            <tr>
+              <td><span class="method-badge">GET</span></td>
+              <td><code>/api/book-info</code></td>
+              <td>একক বইয়ের বিস্তারিত তথ্য ও ডাউনলোড লিঙ্ক</td>
+              <td>Header: <code>x-api-key: YOUR_API_KEY</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block-wrap" style="margin-top: 1.5rem;">
+        <div class="code-block-header">
+          <span>cURL API Request Example</span>
+          <button type="button" class="copy-code-btn" onclick="copySnippet('codeCurl')">Copy Code</button>
+        </div>
+        <pre class="code-block" id="codeCurl">curl -X GET "https://free.ieltsbooks.workers.dev/api/data-books" \
+  -H "x-api-key: YOUR_API_KEY"</pre>
+      </div>
+    </section>
+
+    <!-- SECTION 4: Strict Security & Expiry Policy -->
+    <section class="guide-card" style="border-left: 4px solid var(--accent);">
+      <h2>⏱️ টোকেন নিরাপত্তা ও এক্সপায়ারি পলিসি</h2>
+      <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+        <li style="font-size: 0.95rem; color: var(--text-muted); display: flex; gap: 0.5rem;">
+          <strong style="color: var(--text);">১. ১.৫ সেকেন্ডের কঠোর মেয়াদ (Strict 1.5s Expiry):</strong> প্রতিটি টোকেন জেনারেট হওয়ার ১.৫ সেকেন্ডের মধ্যে ব্রাউজারে ভ্যালিডেশন হতে হবে। পুরনো বা কপি করা লিঙ্ক সরাসরি 404 লিঙ্কে রিডাইরেক্ট হবে।
+        </li>
+        <li style="font-size: 0.95rem; color: var(--text-muted); display: flex; gap: 0.5rem;">
+          <strong style="color: var(--text);">২. অ্যান্টি-স্ক্র্যাপার প্রটেকশন:</strong> সার্ভারে সরাসরি বট বা স্ক্র্যাপার রিকোয়েস্ট ঠেকানোর জন্য ডায়নামিক সাইনিং ব্যবহৃত হয়।
+        </li>
+        <li style="font-size: 0.95rem; color: var(--text-muted); display: flex; gap: 0.5rem;">
+          <strong style="color: var(--text);">৩. ব্রাউজার নো-ক্যাশ পলিসি:</strong> সংবেদনশীল লিঙ্ক ব্রাউজার হিস্ট্রি বা ক্যাশে সেভ হওয়া থেকে আটকাতে <code>no-store, no-cache</code> হেডার সংযুক্ত থাকে।
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <div><strong>Book Library</strong><span>Learn clearly. Grow confidently.</span></div>
+      <p>&copy; 2026 Book Library. Built for focused learners.</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/navbar.js"></script>
+  <script>
+    function switchMode(mode) {
+      const btnNoKey = document.getElementById('tabModeNoKey');
+      const btnWithKey = document.getElementById('tabModeWithKey');
+      const contentNoKey = document.getElementById('contentNoKey');
+      const contentWithKey = document.getElementById('contentWithKey');
+
+      if (mode === 'no-key') {
+        btnNoKey.classList.add('active');
+        btnNoKey.setAttribute('aria-selected', 'true');
+        btnWithKey.classList.remove('active');
+        btnWithKey.setAttribute('aria-selected', 'false');
+        contentNoKey.style.display = 'block';
+        contentWithKey.style.display = 'none';
+      } else {
+        btnWithKey.classList.add('active');
+        btnWithKey.setAttribute('aria-selected', 'true');
+        btnNoKey.classList.remove('active');
+        btnNoKey.setAttribute('aria-selected', 'false');
+        contentWithKey.style.display = 'block';
+        contentNoKey.style.display = 'none';
+      }
+    }
+
+    function copySnippet(elementId) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      navigator.clipboard.writeText(el.innerText || el.textContent).then(() => {
+        const btn = el.previousElementSibling?.querySelector('.copy-code-btn') || event.target;
+        if (btn) {
+          const orig = btn.textContent;
+          btn.textContent = '✓ Copied!';
+          setTimeout(() => { btn.textContent = orig; }, 2000);
+        }
+      }).catch(() => {
+        alert('Code copied to clipboard!');
+      });
+    }
+  </script>
+</body>
+</html>
